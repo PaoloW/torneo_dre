@@ -16,7 +16,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/', function () {
     $usuario = Auth::user();
 
-    return redirect($usuario && $usuario->rol === 'admin' ? '/admin/importar' : '/juez');
+    return redirect($usuario && $usuario->rol === 'admin' ? '/admin/resultados' : '/juez');
 });
 
 // --- Juez (auth) ---
@@ -31,6 +31,8 @@ Route::middleware('auth')->group(function () {
 
     // --- Admin (auth + rol=admin) ---
     Route::middleware('rol:admin')->prefix('admin')->group(function () {
+        // F2: misma interfaz del juez, pero en modo solo lectura
+        Route::get('/resultados', [JuezController::class, 'resultados'])->name('admin.resultados');
         Route::get('/importar', [ImportController::class, 'mostrarFormulario']);
         Route::post('/importar', [ImportController::class, 'importar']);
     });

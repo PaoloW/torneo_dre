@@ -15,6 +15,7 @@
     var guardando = false;       // bandera anti-reentrada
     var pendiente = false;       // hubo cambios mientras se guardaba
     var limpiarBandera = false;  // el próximo guardado limpia el grupo
+    var SOLO_LECTURA = false;    // F2: vista admin → solo lectura (sin edición)
 
     /* ---------- utilidades ---------- */
     function esc(valor) {
@@ -212,6 +213,18 @@
         var extra = p.dsc_prueba ? [p.dsc_prueba, p.metrica, p.marca].filter(Boolean).join(' · ') : '';
         var textoBuscar = (nombre + ' ' + meta).toLowerCase();
 
+        // F2: en solo lectura no se pintan select de puesto, flechas ni handle de arrastre
+        var controles = '<button type="button" class="btn-icono btn-historial" aria-label="Historial" title="Historial">🕘</button>';
+        if (!SOLO_LECTURA) {
+            controles = '<select class="sel-puesto" aria-label="Puesto de ' + esc(nombre) + '">' + opcionesPuesto(p, total) + '</select>' +
+                controles +
+                '<div class="movs">' +
+                    '<button type="button" class="btn-icono btn-subir" aria-label="Subir">▲</button>' +
+                    '<button type="button" class="btn-icono btn-bajar" aria-label="Bajar">▼</button>' +
+                '</div>';
+        }
+        var handle = SOLO_LECTURA ? '' : '<span class="handle" title="Arrastrar" aria-hidden="true">☰</span>';
+
         return '<li class="fila' + (p.puesto == null ? ' sin-puesto' : '') + '" data-id="' + p.id +
             '" data-buscar="' + esc(textoBuscar) + '">' +
             badgePuesto(p, conteos) +
@@ -220,15 +233,8 @@
                 '<div class="fila-meta">' + esc(meta) + '</div>' +
                 (extra ? '<div class="fila-meta">' + esc(extra) + '</div>' : '') +
             '</div>' +
-            '<div class="fila-controles">' +
-                '<select class="sel-puesto" aria-label="Puesto de ' + esc(nombre) + '">' + opcionesPuesto(p, total) + '</select>' +
-                '<button type="button" class="btn-icono btn-historial" aria-label="Historial" title="Historial">🕘</button>' +
-                '<div class="movs">' +
-                    '<button type="button" class="btn-icono btn-subir" aria-label="Subir">▲</button>' +
-                    '<button type="button" class="btn-icono btn-bajar" aria-label="Bajar">▼</button>' +
-                '</div>' +
-            '</div>' +
-            '<span class="handle" title="Arrastrar" aria-hidden="true">☰</span>' +
+            '<div class="fila-controles">' + controles + '</div>' +
+            handle +
         '</li>';
     }
 
@@ -270,11 +276,13 @@
     }
 
     function programarGuardado() {
+        if (SOLO_LECTURA) return; // F2: la vista admin no edita
         clearTimeout(temporizador);
         temporizador = setTimeout(guardarOrden, DEBOUNCE);
     }
 
     function guardarOrden() {
+        if (SOLO_LECTURA) return; // F2
         if (!seleccionCompleta()) return;
         if (guardando) { pendiente = true; return; } // anti-reentrada: se reprograma
 
@@ -332,6 +340,7 @@
     }
 
     function moverFila(id, delta) {
+        if (SOLO_LECTURA) return; // F2
         var idx = participantes.findIndex(function (p) { return p.id === id; });
         var destino = idx + delta;
         if (idx < 0 || destino < 0 || destino >= participantes.length) return;
@@ -346,6 +355,7 @@
     /* ---------- eventos de la lista ---------- */
     function eventosLista() {
         $('#lista').on('change', '.sel-puesto', function () {
+            if (SOLO_LECTURA) return; // F2
             var id = Number($(this).closest('.fila').data('id'));
             var p = buscar(id);
             if (!p) return;
@@ -370,6 +380,7 @@
     }
 
     function iniciarSortable() {
+        if (SOLO_LECTURA) return; // F2: sin drag & drop en la vista admin
         $('#lista').sortable({
             handle: '.handle',
             delay: 200,
@@ -390,6 +401,7 @@
 
     /* ---------- observación (mismo debounce, upsert) ---------- */
     function programarObservacion() {
+        if (SOLO_LECTURA) return; // F2: observación en solo lectura
         clearTimeout(tempObs);
         tempObs = setTimeout(guardarObservacion, DEBOUNCE);
     }
@@ -410,6 +422,7 @@
 
     /* ---------- limpiar orden ---------- */
     function limpiarOrden() {
+        if (SOLO_LECTURA) return; // F2
         if (!participantes.length) return;
         if (!confirm('¿Limpiar el orden del grupo actual? Los puestos quedarán vacíos.')) return;
         participantes.forEach(function (p) { p.puesto = null; });
@@ -460,6 +473,13 @@
 
     /* ---------- init ---------- */
     function iniciar() {
+        // F2: detecta la vista admin (solo lectura) antes de montar la UI
+        SOLO_LECTURA = String($('#vista-resultados').data('soloLectura')) === 'true';
+        if (SOLO_LECTURA) {
+            $('#btn-limpiar').prop('hidden', true);
+            $('#observacion').prop('readonly', true);
+        }
+
         cargarGrupos();
         iniciarSortable();
         eventosLista();

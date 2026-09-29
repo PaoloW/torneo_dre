@@ -120,6 +120,11 @@ class GrupoController extends Controller
      */
     public function guardar(Request $request): JsonResponse
     {
+        // F2: el admin no puede editar nada (solo lectura también en la API)
+        if ($request->user()?->rol === 'admin') {
+            return response()->json(['message' => 'La vista de administración es de solo lectura'], 403);
+        }
+
         $datos = $request->validate([
             'grupo.disciplina' => ['required', 'string'],
             'grupo.categoria' => ['required', 'string'],
@@ -179,6 +184,11 @@ class GrupoController extends Controller
      */
     public function observacion(Request $request): JsonResponse
     {
+        // F2: el admin no puede editar nada (solo lectura también en la API)
+        if ($request->user()?->rol === 'admin') {
+            return response()->json(['message' => 'La vista de administración es de solo lectura'], 403);
+        }
+
         $datos = $request->validate([
             'grupo.disciplina' => ['required', 'string'],
             'grupo.categoria' => ['required', 'string'],

@@ -40,7 +40,9 @@ body {
 
 .cabecera-izq { display: flex; align-items: center; gap: .75rem; min-width: 0; }
 .cabecera-titulo { font-weight: 700; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cabecera-der { display: flex; align-items: center; gap: .5rem; }
+.cabecera-der { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; justify-content: flex-end; }
+.cabecera-enlace { color: #fff; font-size: .85rem; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.cabecera-enlace.activo { font-weight: 700; text-decoration-thickness: 2px; }
 .cabecera-usuario { font-size: .85rem; opacity: .9; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .form-logout { margin: 0; }
 
@@ -123,6 +125,22 @@ body {
 .btn-secundario { background: #fff; color: var(--texto); border-color: var(--borde); }
 .btn-secundario:hover:not(:disabled) { border-color: var(--acento); color: var(--acento); }
 .ancho { width: 100%; }
+
+/* F2: badge de solo lectura (vista admin de resultados) */
+.badge-solo-lectura {
+    align-self: center;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 .8rem;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    font-size: .8rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
 
 .btn-icono {
     min-width: 44px;

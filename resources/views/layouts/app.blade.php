@@ -16,6 +16,12 @@
     </div>
     @auth
         <div class="cabecera-der">
+            @if(auth()->user()->rol === 'admin')
+                <a class="cabecera-enlace{{ request()->is('admin/resultados') ? ' activo' : '' }}"
+                   href="{{ url('/admin/resultados') }}">Resultados</a>
+                <a class="cabecera-enlace{{ request()->is('admin/importar') ? ' activo' : '' }}"
+                   href="{{ url('/admin/importar') }}">Importar CSV</a>
+            @endif
             <span class="cabecera-usuario">{{ auth()->user()->name }}</span>
             <form method="POST" action="{{ route('logout') }}" class="form-logout">
                 @csrf
