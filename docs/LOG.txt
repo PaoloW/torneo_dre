@@ -44,3 +44,4 @@
 2026-09-29 14:44 → PLAN.md: añadidos fixes F16 (altura del combo Disciplina/Prueba igual a los selects) y F17 (valor visible + cierre del panel al elegir opción en el combo) → Iniciado
 2026-09-29 14:50 → F16–F17 aplicados (public/css/app.css, public/js/juez.js): combo con box-sizing border-box y display block (44 px igual que el select, Beer CSS forzaba content-box en <button>), repintado del control actual con el valor elegido al cambiar el filtro y preventDefault en la opción del combo para que el <label> no reabra el panel → Terminado
 2026-09-29 14:51 → Verificación F16–F17: Chrome headless sobre juez.js/app.css reales (combo 62→44 px, panel cerrado tras elegir, botón "DISC2 (2)"), test jsdom+jQuery (38/38 OK) y entrega HTTP con cache-busting → Terminado
+2026-09-29 15:26 → PLAN.md: añadido fix F18 (rutas de las vistas con helpers route()/asset()/url() en vez de texto estático) → Iniciado
