@@ -62,6 +62,7 @@
     <p id="vacio" class="vacio" hidden>Seleccione disciplina, categoría y clase para ver los clasificados.</p>
 
     <!-- F10: observación movida al final de la vista -->
+    <br>
     <details class="observacion" id="panel-observacion" hidden>
         <summary>{{ $soloLectura ? 'Observación del juez (solo lectura)' : 'Observación del juez (opcional)' }}</summary>
         <textarea id="observacion" rows="3" placeholder="Escriba aquí su observación para este grupo…"></textarea>
