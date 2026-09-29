@@ -77,12 +77,13 @@ CREATE TABLE observaciones (
   id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   disciplina VARCHAR(80)  NOT NULL,
   categoria  VARCHAR(50)  NOT NULL,
+  genero     VARCHAR(20)  NOT NULL DEFAULT '',   -- F13: DAMAS / VARONES (parte de la clave)
   clase      VARCHAR(100) NOT NULL,
   prueba     VARCHAR(100) NOT NULL DEFAULT '',   -- '' cuando no aplica
   texto      TEXT         NULL,
   user_id    BIGINT UNSIGNED NULL,
   updated_at TIMESTAMP NULL, created_at TIMESTAMP NULL,
-  UNIQUE KEY uq_grupo (disciplina, categoria, clase, prueba)
+  UNIQUE KEY uq_grupo (disciplina, categoria, genero, clase, prueba)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- auditoría simple: quién modificó el puesto y cuándo (1 fila por cambio real)
@@ -144,8 +145,8 @@ GET  /                     redirect → /juez  (o /admin si rol=admin)
 
 -- juez (middleware auth)
 GET  /juez                 JuezController@index
-GET  /api/grupos           GrupoController@grupos     → árbol JSON con conteos
-GET  /api/participantes    GrupoController@lista      → ?disciplina=&categoria=&clase=&prueba=
+GET  /api/grupos           GrupoController@grupos     → filas planas con conteos (F13)
+GET  /api/participantes    GrupoController@lista      → ?categoria=&disciplina=&genero=&clase=&prueba=
 POST /api/guardar-orden    GrupoController@guardar    → {items:[{id,puesto}], grupo:{...}}
 POST /api/guardar-observacion GrupoController@observacion → {grupo:{...}, texto}
 GET  /api/historial/{participante} GrupoController@historial → [{created_at, user_nombre, puesto_anterior, puesto_nuevo}] (últimas 20)
@@ -162,7 +163,7 @@ GET  /resultados/pdf       GrupoController@pdf → vista imprimible del grupo fi
 
 ## 5. Reglas de negocio (empates incluidos)
 
-1. **Clave de grupo:** `disciplina | categoria | clase_variante | dsc_prueba` (`dsc_prueba` = `''` si es NULL).
+1. **Clave de grupo:** `categoria | disciplina | genero | clase_variante | dsc_prueba` (`dsc_prueba` = `''` si es NULL). *(F13: el género entra en la clave → DAMAS y VARONES se listan y se guardan por separado.)*
    *Supuesto:* si una disciplina con métrica tiene `dsc_prueba`, ese valor también segmenta la lista.
 2. **Puestos con empates permitidos (por defecto):**
    - Varios participantes pueden tener el mismo `puesto` (1° empatado, 2° empatado...).
@@ -201,8 +202,9 @@ que envía `items: []`). Dentro de la misma transacción se registra la auditor�
 ## 7. UI/UX (mobile-first, minimalista)
 
 - **Header sticky:** nombre del torneo, usuario, logout. Breadcrumb `Disciplina / Categoría / Clase / Prueba`.
-- **Navegación:** 3–4 `<select>` encadenados (Disciplina → Categoría → Clase → Prueba si aplica);
-  al cambiar uno se recarga vía AJAX. Badge con nº de clasificados.
+- **Navegación:** 5 `<select>` encadenados (Categoría → Disciplina → Género → Clase → Prueba si aplica;
+  F13) — con input de búsqueda si un dropdown tiene más de 5 opciones; al cambiar uno se recarga vía AJAX.
+  Badge con nº de clasificados.
 - **Fila (card):** badge de puesto (grande, izquierda) · nombre completo · IE / UGEL / Región ·
   `<select>` de puesto (1..N) · handle de arrastre (☰). Mín. 56 px alto, touch ≥44 px.
 - **Drag & drop:** jQuery UI Sortable + touch-punch, `delay: 200, touchStartThreshold: 5` para no
@@ -316,8 +318,11 @@ y el buscador local.
 | **F10** | **Observación al final de la vista** | El `<details class="observacion" id="panel-observacion">` se mueve **después** de `<ul id="lista">` y de `#vacio` (antes estaba entre la barra y la lista); sin cambios de lógica (mismo debounce y upsert). |
 | **F11** | **Autoselección de categoría/clase única** | Al elegir la disciplina, si esta tiene **una sola categoría** se selecciona automáticamente en `#sel-categoria`; y si la categoría elegida tiene **una sola clase**, se selecciona automáticamente en `#sel-clase`. Si el grupo queda completo se carga el listado de participantes sin clics adicionales. Nuevo helper `refrescarClase()` (equivalente a `refrescarPrueba()`) centraliza el llenado de `#sel-clase` y la auto-selección; `alCambiarDisciplina()` y `alCambiarCategoria()` lo invocan. Los dropdowns siguen visibles con la opción única elegida. |
 | **F12** | **Dropdown de puesto con filtro al tipear (>5 puestos)** | Cuando el grupo tiene **más de 5 participantes**, el `<select class="sel-puesto">` se reemplaza por un combo (`comboPuesto()`: botón + panel con `<input class="combo-filtro">` y `<ul class="combo-lista">`): al tipear se filtran las opciones por número (subcadena: `1` → 1°, 10°, 11°…), **Enter** elige la primera visible, **Esc** o clic fuera cierran el panel y `Sin coincidencias` si nada coincide. Con ≤5 puestos se mantiene el `<select>` nativo. Estilos en `app.css` (`.combo-puesto`, `.combo-panel`, `.combo-filtro`, `.combo-lista`). |
+| **F13** | **Orden de filtros: Categoría → Disciplina → Género → Clase → Prueba + buscador en los dropdowns** | Los filtros se reordenan y reencadenan en ese orden (antes la Disciplina era la raíz y **no había filtro de género**: DAMAS y VARONES salían mezclados). `GrupoController@grupos` devuelve ahora **filas planas** `{categoria, disciplina, genero, clase, prueba, total}` y `juez.js` arma el cascada con `CAMPOS = ['categoria','disciplina','genero','clase','prueba']` (auto-selección de la opción única; `seleccionCompleta()` exige categoría + disciplina + género + clase). **`genero` entra en la clave de grupo**: `lista`, `guardar-orden`, `guardar-observacion` y `pdf` filtran por `grupo.genero`, y la tabla `observaciones` gana la columna `genero` (migración `add_genero_to_observaciones`; `uq_grupo` e `idx_grupo` actualizados). Cualquier dropdown con **más de 5 opciones** se pinta como combo con `<input>` de búsqueda (misma mecánica que F12: filtra al tipear, **Enter** elige, **Esc**/clic fuera cierran, `Sin coincidencias`); con ≤5 opciones se mantiene el `<select>` nativo. |
+| **F14** | **Dropdown Clase oculto si hay una sola clase** | Si, tras aplicar los filtros previos, la disciplina solo tiene **1 clase**, `renderFiltro('clase')` la auto-selecciona y oculta `#campo-clase` (el resto del cascada —prueba— sigue cargando); con 2 o más clases el dropdown se muestra normalmente. |
+| **F15** | **Conteo de clasificados en cada opción de Prueba** | Cada opción del dropdown `#filtro-prueba` muestra `Nombre (N)` con los clasificados de esa prueba dentro del grupo filtrado (incluida `Todas (N)`, donde N = filas sin `dsc_prueba`); el conteo proviene del campo `total` de las filas planas de `/api/grupos`. Si la disciplina/clase no tiene pruebas, el dropdown se oculta. |
 
 ---
 
-*Plan aprobado en modo Plan → Act. Fecha: 29/09/2026. Fixes F1–F3 añadidos el 29/09/2026. Fixes F4–F6 (seeder usuarios, gestión de usuarios, listado responsive) añadidos el 29/09/2026. Fixes F7–F10 (DNI antes del nombre y búsqueda por DNI, buscador en línea propia con ✕ al inicio de la lista, nivel/grado bajo IE-UGEL, observación al final) añadidos el 29/09/2026. Fixes F11–F12 (autoselección de categoría/clase única con carga de participantes, combo de puesto con filtro al tipear cuando hay más de 5 puestos) añadidos el 29/09/2026.*
+*Plan aprobado en modo Plan → Act. Fecha: 29/09/2026. Fixes F1–F3 añadidos el 29/09/2026. Fixes F4–F6 (seeder usuarios, gestión de usuarios, listado responsive) añadidos el 29/09/2026. Fixes F7–F10 (DNI antes del nombre y búsqueda por DNI, buscador en línea propia con ✕ al inicio de la lista, nivel/grado bajo IE-UGEL, observación al final) añadidos el 29/09/2026. Fixes F11–F12 (autoselección de categoría/clase única con carga de participantes, combo de puesto con filtro al tipear cuando hay más de 5 puestos) añadidos el 29/09/2026. Fixes F13–F15 (orden de filtros Categoría→Disciplina→Género→Clase→Prueba con buscador en dropdowns >5, dropdown Clase oculto si hay una sola clase, conteo de clasificados en cada opción de Prueba) añadidos el 29/09/2026.*
 

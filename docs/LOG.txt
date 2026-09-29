@@ -38,3 +38,4 @@
 
 2026-09-29 14:20 → F11–F12 aplicados (public/js/juez.js, public/css/app.css): autoselección de categoría/clase única con carga automática del listado (refrescarClase) y combo de puesto con filtro al tipear cuando hay más de 5 puestos (comboPuesto, Enter/Esc, clic fuera) → Terminado
 2026-09-29 14:25 → Verificación F11–F12: test jsdom + jQuery sobre juez.js real (27/27 OK) y entrega HTTP de juez.js/app.css con el código nuevo → Terminado
+2026-09-29 13:55 → PLAN.md: añadidos fixes F13 (orden de filtros Categoría→Disciplina→Género→Clase→Prueba con buscador en dropdowns >5), F14 (dropdown Clase oculto con 1 sola clase) y F15 (conteo de clasificados en cada opción de Prueba) → Iniciado
