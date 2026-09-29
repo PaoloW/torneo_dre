@@ -23,7 +23,7 @@
             <p class="error">{{ $message }}</p>
         @enderror
 
-        <button type="submit" class="btn btn-primario ancho">Ingresar</button>
+        <button type="submit" class="btn btn-primario">Ingresar</button>
     </form>
 </div>
 @endsection
