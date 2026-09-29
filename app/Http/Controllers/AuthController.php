@@ -19,14 +19,14 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    // POST /login
+    // POST /login (F4: acceso por usuario simple, sin email)
     public function login(Request $request): RedirectResponse
     {
         $credenciales = $request->validate([
-            'email' => ['required', 'email'],
+            'usuario' => ['required', 'string'],
             'password' => ['required', 'string'],
         ], [], [
-            'email' => 'correo',
+            'usuario' => 'usuario',
             'password' => 'contraseña',
         ]);
 
@@ -37,8 +37,8 @@ class AuthController extends Controller
         }
 
         return back()
-            ->withErrors(['email' => 'Credenciales incorrectas.'])
-            ->onlyInput('email');
+            ->withErrors(['usuario' => 'Credenciales incorrectas.'])
+            ->onlyInput('usuario');
     }
 
     // POST /logout

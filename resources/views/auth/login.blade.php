@@ -10,8 +10,8 @@
         <p class="login-subtitulo">Orden de clasificados — jueces</p>
 
         <label class="campo">
-            <span>Correo</span>
-            <input type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username">
+            <span>Usuario</span>
+            <input type="text" name="usuario" value="{{ old('usuario') }}" required autofocus autocomplete="username">
         </label>
 
         <label class="campo">
@@ -19,7 +19,7 @@
             <input type="password" name="password" required autocomplete="current-password">
         </label>
 
-        @error('email')
+        @error('usuario')
             <p class="error">{{ $message }}</p>
         @enderror
 

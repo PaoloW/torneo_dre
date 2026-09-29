@@ -8,8 +8,9 @@ use Illuminate\Support\Facades\Hash;
 
 class CrearJuez extends Command
 {
+    // F4: acceso por usuario simple (admin, juez1, juez2) en lugar de email
     protected $signature = 'torneo:crear
-        {email : Correo del usuario}
+        {usuario : Usuario (sin @)}
         {nombre : Nombre completo}
         {password? : Contraseña (por defecto: secret)}
         {rol? : admin o juez (por defecto: juez)}';
@@ -18,7 +19,7 @@ class CrearJuez extends Command
 
     public function handle(): int
     {
-        $email = $this->argument('email');
+        $usuario = $this->argument('usuario');
         $nombre = $this->argument('nombre');
         $password = $this->argument('password') ?: 'secret';
         $rol = $this->argument('rol') ?: 'juez';
@@ -29,8 +30,8 @@ class CrearJuez extends Command
             return self::FAILURE;
         }
 
-        $usuario = User::updateOrCreate(
-            ['email' => $email],
+        $registro = User::updateOrCreate(
+            ['usuario' => $usuario],
             [
                 'name' => $nombre,
                 'password' => Hash::make($password),
@@ -38,7 +39,7 @@ class CrearJuez extends Command
             ]
         );
 
-        $this->info("Usuario #{$usuario->id} {$usuario->email} ({$usuario->rol}) listo.");
+        $this->info("Usuario #{$registro->id} {$registro->usuario} ({$registro->rol}) listo.");
 
         return self::SUCCESS;
     }
