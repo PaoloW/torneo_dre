@@ -27,4 +27,6 @@
 2026-09-29 11:50 → Verificación E2E HTTP: login por usuario, CRUD usuarios, permisos 403, seeder idempotente, CSS responsive (16/16) → Terminado
 
 2026-09-29 11:26 → PLAN.md: añadidos fixes F4 (seeder usuarios + login por usuario), F5 (gestión de usuarios admin) y F6 (listado responsive) → Iniciado
+2026-09-29 13:10 → PLAN.md: añadidos fixes F7 (DNI antes del nombre + búsqueda por DNI), F8 (buscador en línea propia al inicio de la lista con ✕), F9 (nivel/grado bajo IE-UGEL) y F10 (observación al final de la vista) → Iniciado
+
 
