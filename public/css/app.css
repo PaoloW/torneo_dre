@@ -108,7 +108,27 @@ body {
 
 /* ---------- Barra de acciones ---------- */
 .barra { display: flex; gap: .5rem; margin-bottom: .75rem; }
+
+/* F8: buscador en su propia línea, al inicio de la lista (siempre visible, también en móvil) */
+.busqueda { position: relative; display: flex; margin-bottom: .75rem; }
 .buscador { flex: 1; }
+.busqueda .buscador { padding-right: 2.75rem; }
+.busqueda .buscador::-webkit-search-cancel-button { -webkit-appearance: none; display: none; } /* usamos el ✕ propio */
+.buscador-x {
+    position: absolute;
+    right: .35rem;
+    top: 50%;
+    transform: translateY(-50%);
+    min-width: 36px;
+    min-height: 36px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--texto-suave);
+    font-size: 1rem;
+    cursor: pointer;
+}
+.buscador-x:hover { background: var(--borde); color: var(--texto); }
 
 .btn {
     min-height: 44px;
@@ -203,7 +223,11 @@ body {
 
 .fila-info { flex: 1 1 auto; min-width: 0; }
 .fila-nombre { font-weight: 700; font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* F7: DNI antes del nombre */
+.fila-dni { color: var(--texto-suave); font-weight: 600; font-family: ui-monospace, Consolas, "Courier New", monospace; margin-right: .35rem; }
 .fila-meta { font-size: .78rem; color: var(--texto-suave); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* F9: línea de nivel (Primaria/Secundaria) y grado */
+.fila-nivel { font-weight: 600; }
 
 .fila-controles { display: flex; align-items: center; gap: .15rem; flex: 0 0 auto; }
 .fila-controles .sel-puesto {

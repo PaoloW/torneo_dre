@@ -28,5 +28,8 @@
 
 2026-09-29 11:26 → PLAN.md: añadidos fixes F4 (seeder usuarios + login por usuario), F5 (gestión de usuarios admin) y F6 (listado responsive) → Iniciado
 2026-09-29 13:10 → PLAN.md: añadidos fixes F7 (DNI antes del nombre + búsqueda por DNI), F8 (buscador en línea propia al inicio de la lista con ✕), F9 (nivel/grado bajo IE-UGEL) y F10 (observación al final de la vista) → Iniciado
+2026-09-29 13:34 → F7–F10 aplicados (juez/index.blade.php, juez.js, app.css, GrupoController): DNI antes del nombre + búsqueda por DNI, buscador en línea propia con ✕ al inicio de la lista, línea Primaria/Secundaria + grado bajo IE-UGEL, observación al final de la vista → Terminado
+2026-09-29 13:36 → Verificación E2E HTTP: estructura vista juez y admin, API con DNI/nivel/grado, juez.js con lógica nueva (16/16 + admin) → Terminado
+
 
 

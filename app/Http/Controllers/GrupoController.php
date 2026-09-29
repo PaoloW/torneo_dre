@@ -140,8 +140,8 @@ class GrupoController extends Controller
             ->orderBy('id')
             ->get([
                 'id', 'nombres', 'apepat', 'apemat', 'ie', 'ugel', 'regionie', 'provinciaie',
-                'grado', 'genero', 'tipo_documento', 'numdoc_participante', 'tipo_participante',
-                'puesto', 'dsc_prueba', 'metrica', 'marca',
+                'nivel_educativo', 'grado', 'genero', 'tipo_documento', 'numdoc_participante',
+                'tipo_participante', 'puesto', 'dsc_prueba', 'metrica', 'marca',
             ]);
 
         $observacion = Observacion::query()

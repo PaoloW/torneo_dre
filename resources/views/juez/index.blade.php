@@ -42,8 +42,6 @@
     </div>
 
     <div class="barra">
-        <input type="search" id="buscador" class="buscador" placeholder="Buscar por nombre o IE…"
-               aria-label="Buscar participante" autocomplete="off">
         @if($soloLectura)
             <span class="badge-solo-lectura" title="Vista de resultados en modo lectura">Solo lectura</span>
         @endif
@@ -51,14 +49,23 @@
         <button type="button" id="btn-limpiar" class="btn btn-secundario" disabled>Limpiar orden</button>
     </div>
 
-    <details class="observacion" id="panel-observacion" hidden>
-        <summary>{{ $soloLectura ? 'Observación del juez (solo lectura)' : 'Observación del juez (opcional)' }}</summary>
-        <textarea id="observacion" rows="3" placeholder="Escriba aquí su observación para este grupo…"></textarea>
-    </details>
+    <!-- F8: buscador en su propia línea, al inicio de la lista (siempre visible, también en móvil) -->
+    <div class="busqueda">
+        <input type="search" id="buscador" class="buscador" placeholder="Buscar por DNI o nombre…"
+               aria-label="Buscar por DNI o nombre" autocomplete="off">
+        <button type="button" id="btn-limpiar-buscador" class="buscador-x" hidden
+                aria-label="Limpiar búsqueda" title="Limpiar búsqueda">✕</button>
+    </div>
 
     <ul id="lista" class="lista" aria-label="Clasificados"></ul>
 
     <p id="vacio" class="vacio" hidden>Seleccione disciplina, categoría y clase para ver los clasificados.</p>
+
+    <!-- F10: observación movida al final de la vista -->
+    <details class="observacion" id="panel-observacion" hidden>
+        <summary>{{ $soloLectura ? 'Observación del juez (solo lectura)' : 'Observación del juez (opcional)' }}</summary>
+        <textarea id="observacion" rows="3" placeholder="Escriba aquí su observación para este grupo…"></textarea>
+    </details>
 </div>
 
 <dialog id="modal-historial" class="modal">

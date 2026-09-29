@@ -208,10 +208,12 @@
     }
 
     function filaHtml(p, total, conteos) {
+        var dni = p.numdoc_participante ? String(p.numdoc_participante).trim() : ''; // F7
         var nombre = nombreCompleto(p);
         var meta = [p.ie, p.ugel, p.regionie].filter(Boolean).join(' · ');
+        var nivel = [p.nivel_educativo, p.grado].filter(Boolean).join(' · '); // F9: Primaria/Secundaria + grado
         var extra = p.dsc_prueba ? [p.dsc_prueba, p.metrica, p.marca].filter(Boolean).join(' · ') : '';
-        var textoBuscar = (nombre + ' ' + meta).toLowerCase();
+        var textoBuscar = (dni + ' ' + nombre + ' ' + meta).toLowerCase(); // F7: incluye DNI
 
         // F2: en solo lectura no se pintan select de puesto, flechas ni handle de arrastre
         var controles = '<button type="button" class="btn-icono btn-historial" aria-label="Historial" title="Historial">🕘</button>';
@@ -229,8 +231,9 @@
             '" data-buscar="' + esc(textoBuscar) + '">' +
             badgePuesto(p, conteos) +
             '<div class="fila-info">' +
-                '<div class="fila-nombre">' + esc(nombre) + '</div>' +
+                '<div class="fila-nombre">' + (dni ? '<span class="fila-dni">' + esc(dni) + '</span> ' : '') + esc(nombre) + '</div>' +
                 '<div class="fila-meta">' + esc(meta) + '</div>' +
+                (nivel ? '<div class="fila-meta fila-nivel">' + esc(nivel) + '</div>' : '') +
                 (extra ? '<div class="fila-meta">' + esc(extra) + '</div>' : '') +
             '</div>' +
             '<div class="fila-controles">' + controles + '</div>' +
@@ -391,9 +394,10 @@
         });
     }
 
-    /* ---------- buscador local (nombre o IE) ---------- */
+    /* ---------- buscador local (DNI, nombre o IE) ---------- */
     function aplicarBuscador() {
         var texto = ($('#buscador').val() || '').toLowerCase().trim();
+        $('#btn-limpiar-buscador').prop('hidden', !texto); // F8: ✕ solo si hay texto
         $('#lista .fila').each(function () {
             var coincide = !texto || String($(this).data('buscar')).indexOf(texto) !== -1;
             $(this).toggle(coincide);
@@ -490,6 +494,9 @@
         $('#sel-clase').on('change', alCambiarClase);
         $('#sel-prueba').on('change', alCambiarPrueba);
         $('#buscador').on('input', aplicarBuscador);
+        $('#btn-limpiar-buscador').on('click', function () { // F8: limpia la búsqueda
+            $('#buscador').val('').trigger('input').focus();
+        });
         $('#btn-limpiar').on('click', limpiarOrden);
         // F3: exporta el grupo filtrado en una pestaña nueva (preview web → Imprimir / Guardar PDF)
         $('#btn-pdf').on('click', function () {
