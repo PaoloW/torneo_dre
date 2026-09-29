@@ -7,6 +7,7 @@ use App\Models\Participante;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class GrupoController extends Controller
 {
@@ -88,6 +89,45 @@ class GrupoController extends Controller
             'prueba' => ['nullable', 'string'],
         ]);
 
+        [$participantes, $observacion] = $this->buscarGrupo($datos);
+
+        return response()->json(['participantes' => $participantes, 'observacion' => $observacion]);
+    }
+
+    /**
+     * GET /resultados/pdf?disciplina=&categoria=&clase=&prueba=
+     * F3: vista imprimible del grupo filtrado (preview web → botón "Imprimir / Guardar PDF").
+     */
+    public function pdf(Request $request): View
+    {
+        $datos = $request->validate([
+            'disciplina' => ['required', 'string'],
+            'categoria' => ['required', 'string'],
+            'clase' => ['required', 'string'],
+            'prueba' => ['nullable', 'string'],
+        ]);
+
+        [$participantes, $observacion] = $this->buscarGrupo($datos);
+
+        return view('juez.pdf', [
+            'grupo' => [
+                'disciplina' => $datos['disciplina'],
+                'categoria' => $datos['categoria'],
+                'clase' => $datos['clase'],
+                'prueba' => $datos['prueba'] ?? '',
+            ],
+            'participantes' => $participantes,
+            'observacion' => $observacion,
+            'usuario' => $request->user(),
+            'generado' => now()->format('d/m/Y H:i'),
+        ]);
+    }
+
+    /**
+     * Consulta compartida por lista() y pdf(): participantes del grupo + observación del juez.
+     */
+    private function buscarGrupo(array $datos): array
+    {
         $prueba = $datos['prueba'] ?? '';
 
         $participantes = Participante::query()
@@ -100,8 +140,8 @@ class GrupoController extends Controller
             ->orderBy('id')
             ->get([
                 'id', 'nombres', 'apepat', 'apemat', 'ie', 'ugel', 'regionie', 'provinciaie',
-                'grado', 'genero', 'numdoc_participante', 'tipo_participante', 'puesto',
-                'dsc_prueba', 'metrica', 'marca',
+                'grado', 'genero', 'tipo_documento', 'numdoc_participante', 'tipo_participante',
+                'puesto', 'dsc_prueba', 'metrica', 'marca',
             ]);
 
         $observacion = Observacion::query()
@@ -111,7 +151,7 @@ class GrupoController extends Controller
             ->where('prueba', $prueba)
             ->value('texto');
 
-        return response()->json(['participantes' => $participantes, 'observacion' => $observacion]);
+        return [$participantes, $observacion];
     }
 
     /**

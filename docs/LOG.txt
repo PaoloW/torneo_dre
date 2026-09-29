@@ -15,6 +15,8 @@
 2026-09-29 10:29 → PLAN.md: añadida sección 13 con fixes F1 (dropdown prueba), F2 (vista admin solo lectura) y F3 (export PDF) → Iniciado
 2026-09-29 10:32 → F1: dropdown Prueba refrescado según disciplina/categoría/clase (refrescarPrueba, sin duplicados, cache-busting de assets) → Corregido
 2026-09-29 10:36 → F2: vista admin /admin/resultados en solo lectura (UI sin edición + API 403 + nav header) → Terminado
+2026-09-29 10:40 → F3: export PDF con vista imprimible /resultados/pdf (juez y admin) del grupo filtrado → Terminado
+
 
 
 

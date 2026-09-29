@@ -25,6 +25,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/api/grupos', [GrupoController::class, 'grupos']);
     Route::get('/api/participantes', [GrupoController::class, 'lista']);
+    // F3: export PDF (juez y admin) del grupo filtrado
+    Route::get('/resultados/pdf', [GrupoController::class, 'pdf'])->name('resultados.pdf');
     Route::post('/api/guardar-orden', [GrupoController::class, 'guardar']);
     Route::post('/api/guardar-observacion', [GrupoController::class, 'observacion']);
     Route::get('/api/historial/{participante}', [GrupoController::class, 'historial']);

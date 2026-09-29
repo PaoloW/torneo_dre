@@ -258,6 +258,7 @@
 
         $('#badge-clasificados').text(participantes.length + ' clasificados').prop('hidden', !participantes.length);
         $('#btn-limpiar').prop('disabled', !participantes.length);
+        $('#btn-pdf').prop('disabled', !seleccionCompleta()); // F3: export del grupo filtrado
         $('#panel-observacion').prop('hidden', !seleccionCompleta());
 
         aplicarBuscador();
@@ -490,6 +491,11 @@
         $('#sel-prueba').on('change', alCambiarPrueba);
         $('#buscador').on('input', aplicarBuscador);
         $('#btn-limpiar').on('click', limpiarOrden);
+        // F3: exporta el grupo filtrado en una pestaña nueva (preview web → Imprimir / Guardar PDF)
+        $('#btn-pdf').on('click', function () {
+            if (!seleccionCompleta()) return;
+            window.open('/resultados/pdf?' + $.param(seleccion), '_blank');
+        });
         $('#observacion').on('input', programarObservacion);
         $('#btn-cerrar-historial').on('click', function () {
             document.getElementById('modal-historial').close();

@@ -47,6 +47,7 @@
         @if($soloLectura)
             <span class="badge-solo-lectura" title="Vista de resultados en modo lectura">Solo lectura</span>
         @endif
+        <button type="button" id="btn-pdf" class="btn btn-secundario" disabled>Exportar PDF</button>
         <button type="button" id="btn-limpiar" class="btn btn-secundario" disabled>Limpiar orden</button>
     </div>
 
