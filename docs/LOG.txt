@@ -11,3 +11,5 @@
 2026-09-29 10:45 → Corrección: ruta absoluta del CSV subido vía web (disco local en storage/app/private) → Corregido
 2026-09-29 10:55 → Verificación E2E HTTP: login, permisos, árbol, orden+empate, auditoría, historial, observación, limpiar, importación web (26/26) → Terminado
 2026-09-29 11:00 → Limpieza de datos de prueba y artefactos temporales → Terminado
+2026-09-29 10:13 → Corrección: pruebas atascadas al cambiar disciplina/categoría/clase (vaciar #sel-prueba + [hidden] real en CSS) → Corregido
+

@@ -63,8 +63,8 @@
             .fail(function () { toast('No se pudo cargar el árbol de grupos', 'error'); });
     }
 
-    function llenarSelect($select, opciones) {
-        $select.empty().append($('<option>').val('').text('Seleccione…'));
+    function llenarSelect($select, opciones, etiqueta) {
+        $select.empty().append($('<option>').val('').text(etiqueta || 'Seleccione…'));
         opciones.forEach(function (op) {
             $select.append($('<option>').val(op.valor).text(op.texto));
         });
@@ -89,7 +89,9 @@
         seleccion.disciplina = $('#sel-disciplina').val() || '';
         seleccion.categoria = ''; seleccion.clase = ''; seleccion.prueba = '';
         $('#campo-categoria, #campo-clase, #campo-prueba').prop('hidden', true);
-        $('#sel-categoria, #sel-clase, #sel-prueba').val('');
+        llenarSelect($('#sel-categoria'), []);
+        llenarSelect($('#sel-clase'), []);
+        llenarSelect($('#sel-prueba'), [], 'Todas');
         if (seleccion.disciplina) {
             var d = nodoDisciplina();
             llenarSelect($('#sel-categoria'), d.categorias.map(function (c) {
@@ -104,7 +106,8 @@
         seleccion.categoria = $('#sel-categoria').val() || '';
         seleccion.clase = ''; seleccion.prueba = '';
         $('#campo-clase, #campo-prueba').prop('hidden', true);
-        $('#sel-clase, #sel-prueba').val('');
+        llenarSelect($('#sel-clase'), []);
+        llenarSelect($('#sel-prueba'), [], 'Todas');
         if (seleccion.categoria) {
             var c = nodoCategoria();
             llenarSelect($('#sel-clase'), c.clases.map(function (l) {
@@ -119,13 +122,13 @@
         seleccion.clase = $('#sel-clase').val() || '';
         seleccion.prueba = '';
         $('#campo-prueba').prop('hidden', true);
-        $('#sel-prueba').val('');
+        llenarSelect($('#sel-prueba'), [], 'Todas');
         var l = nodoClase();
         if (l && l.con_pruebas) {
             var pruebas = [];
             l.pruebas.forEach(function (p) { if (p) pruebas.push({ valor: p, texto: p }); });
             if (pruebas.length) {
-                llenarSelect($('#sel-prueba'), pruebas);
+                llenarSelect($('#sel-prueba'), pruebas, 'Todas');
                 $('#campo-prueba').prop('hidden', false);
             }
         }
