@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PuestoAuditoria extends Model
 {
+    // la tabla real es 'puesto_auditoria' (sin pluralizar)
+    protected $table = 'puesto_auditoria';
+
     public $timestamps = false;
 
     protected $guarded = [];

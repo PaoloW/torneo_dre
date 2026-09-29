@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ImportController extends Controller
@@ -24,9 +25,10 @@ class ImportController extends Controller
         ]);
 
         $ruta = $request->file('archivo')->storeAs('importaciones', 'clasificados.csv');
+        $rutaAbsoluta = Storage::disk('local')->path($ruta); // el disco local vive en storage/app/private
 
         $codigo = Artisan::call('torneo:importar', [
-            'ruta' => storage_path('app/'.$ruta),
+            'ruta' => $rutaAbsoluta,
             '--fresh' => $request->boolean('fresh'),
         ]);
 

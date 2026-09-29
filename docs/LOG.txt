@@ -1,0 +1,13 @@
+2026-09-29 09:10 → Inicio del proyecto: revisión de PLAN.md, estructura Laravel y CSVs → Iniciado
+2026-09-29 09:15 → Configuración .env para MySQL (BD torneo) → Terminado
+2026-09-29 09:20 → Migraciones participantes, observaciones, puesto_auditoria y users.rol + modelos → Terminado
+2026-09-29 09:25 → Auth manual (login/logout), middleware rol y rutas → Terminado
+2026-09-29 09:45 → API GrupoController (grupos, lista, guardar-orden + auditoría, observación, historial) → Terminado
+2026-09-29 10:10 → UI juez (index.blade, app.css, juez.js: autosave, sortable, empates, historial) → Terminado
+2026-09-29 10:15 → Comandos torneo:importar y torneo:crear + importación CSV web (admin) → Terminado
+2026-09-29 10:20 → Importación de los 3 CSV reales (34 filas) y usuarios admin/juez → Terminado
+2026-09-29 10:35 → Corrección: tabla Observacion mal pluralizada (observacions → observaciones) → Corregido
+2026-09-29 10:40 → Corrección: validar items con [] en limpiar-orden (required → present) → Corregido
+2026-09-29 10:45 → Corrección: ruta absoluta del CSV subido vía web (disco local en storage/app/private) → Corregido
+2026-09-29 10:55 → Verificación E2E HTTP: login, permisos, árbol, orden+empate, auditoría, historial, observación, limpiar, importación web (26/26) → Terminado
+2026-09-29 11:00 → Limpieza de datos de prueba y artefactos temporales → Terminado

@@ -125,7 +125,7 @@ class GrupoController extends Controller
             'grupo.categoria' => ['required', 'string'],
             'grupo.clase' => ['required', 'string'],
             'grupo.prueba' => ['nullable', 'string'],
-            'items' => ['required', 'array'],
+            'items' => ['present', 'array'],   // 'present' admite [] (botón Limpiar orden)
             'items.*.id' => ['required', 'integer'],
             'items.*.puesto' => ['nullable', 'integer', 'min:1'],
             'limpiar' => ['sometimes', 'boolean'],

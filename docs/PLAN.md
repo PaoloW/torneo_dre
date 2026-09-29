@@ -1,0 +1,286 @@
+# PLAN.md — App de Jueces: Orden de Clasificados (Torneo Macro Regional 2026)
+
+Torneo estudiantil (Arequipa, Moquegua, Tacna). Los jueces ordenan a los clasificados por
+**Disciplina > Categoría > Clase** con autoguardado. Sin calificación, solo orden + observación opcional.
+Plazo: puesta en producción en ~2 horas. Sin pruebas automatizadas.
+En docs/ crea un log simple de desarrollo de la aplicación en txt e inserta nuevas filas mientras desarrollas.
+Para el log usa el formato: Fecha y Hora → Acción → Estado (Iniciado, Revisión, Terminado, Fallido, puedes elegir otros).
+Realiza commits despues de cada paso importante o cuando hagas correcciones.
+
+---
+
+## 1. Stack
+
+| Elemento | Elección | Motivo |
+|---|---|---|
+| Backend | Laravel 11 (PHP 8.2) | Rápido de montar, disponible en el equipo |
+| BD | **MySQL** (XAMPP) | Ya instalado. *Nota: `mysql` no está en PATH → usar `C:\xampp\mysql\bin\mysql`* |
+| Frontend | Blade + **jQuery 3 + jQuery UI Sortable + jquery-ui-touch-punch** (CDN) | Sin npm, sin build, drag & drop táctil |
+| Estilos | Usa Beer CSS, mobile-first | Minimalista |
+| Auth | Manual (`Auth::attempt`) + middleware `rol` | Evita Breeze/Jetstream |
+| Importación | Comando artisan que lee CSV **por encabezados** | Funciona con las 28 col de DATA GRAL.MACRO y las 31 de GRAL-METRICAS |
+
+**Directorio existente:** Directorio ya contiene laravel instalado y composer instalado.
+**Base de datos existente:** `mysql -u root -p` (`root` por defecto) → Base de datos `torneo` creada.
+**Empates permitidos por defecto:** varios participantes pueden compartir puesto (ver §5).
+
+---
+
+## 2. Base de datos (4 tablas, sin normalizar)
+
+```sql
+-- ÚNICA tabla de clasificados, plana, una fila por participante
+CREATE TABLE participantes (
+  id                  BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  -- columnas originales del CSV
+  id_anio             INT            NULL,
+  id_ficha_evento     BIGINT         NULL,
+  dre                 VARCHAR(100)   NULL,
+  ugel                VARCHAR(100)   NULL,
+  regionie            VARCHAR(60)    NULL,
+  provinciaie         VARCHAR(80)    NULL,
+  distritoie          VARCHAR(80)    NULL,
+  cod_mod             VARCHAR(20)    NULL,
+  cod_mod_origen      VARCHAR(20)    NULL,
+  ie                  VARCHAR(150)   NULL,
+  nivel_educativo     VARCHAR(40)    NULL,
+  grado               VARCHAR(30)    NULL,
+  categoria           VARCHAR(50)    NULL,   -- CATEGORÍA A/B/C...
+  disciplina          VARCHAR(80)    NULL,   -- VOLEY PLAYA, ATLETISMO, AJEDREZ...
+  clase_variante      VARCHAR(100)   NULL,   -- CLASE_VARIANTE_DE_DISCIPLINA
+  genero              VARCHAR(20)    NULL,   -- VARONES / DAMAS
+  nombre_etapa        VARCHAR(80)    NULL,
+  tipo_participante   VARCHAR(20)    NULL,   -- TITULAR / SUSTITUTO
+  tipo_documento      VARCHAR(20)    NULL,
+  numdoc_participante VARCHAR(20)    NULL,
+  apepat              VARCHAR(60)    NULL,
+  apemat              VARCHAR(60)    NULL,
+  nombres             VARCHAR(80)    NULL,
+  fecha_nacimiento    DATE           NULL,
+  telefono            VARCHAR(20)    NULL,
+  fecha_registro      DATETIME       NULL,
+  fecha_actualizacion DATETIME       NULL,
+  estado_ficha        VARCHAR(30)    NULL,
+  -- 3 columnas extra (atletismo, natación, paratletismo, taekwondo); NULL en el resto
+  dsc_prueba          VARCHAR(100)   NULL,
+  metrica             VARCHAR(50)    NULL,
+  marca               VARCHAR(30)    NULL,
+  -- resultado del juez (autoguardado)
+  puesto              INT            NULL,   -- NULL = sin asignar; duplicados = EMPATE
+  KEY idx_grupo (disciplina, categoria, clase_variante, dsc_prueba),
+  KEY idx_doc (numdoc_participante)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- observación opcional: 1 fila por grupo (upsert)
+CREATE TABLE observaciones (
+  id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  disciplina VARCHAR(80)  NOT NULL,
+  categoria  VARCHAR(50)  NOT NULL,
+  clase      VARCHAR(100) NOT NULL,
+  prueba     VARCHAR(100) NOT NULL DEFAULT '',   -- '' cuando no aplica
+  texto      TEXT         NULL,
+  user_id    BIGINT UNSIGNED NULL,
+  updated_at TIMESTAMP NULL, created_at TIMESTAMP NULL,
+  UNIQUE KEY uq_grupo (disciplina, categoria, clase, prueba)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- auditoría simple: quién modificó el puesto y cuándo (1 fila por cambio real)
+CREATE TABLE puesto_auditoria (
+  id               BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  participante_id  BIGINT UNSIGNED NOT NULL,
+  puesto_anterior  INT            NULL,   -- NULL = sin asignar
+  puesto_nuevo     INT            NULL,   -- NULL = limpiado
+  user_id          BIGINT UNSIGNED NULL,
+  user_nombre      VARCHAR(120)   NULL,   -- copia del nombre del juez al momento de editar
+  created_at       TIMESTAMP      NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_part (participante_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- users estándar de Laravel + rol
+ALTER TABLE users ADD COLUMN rol ENUM('admin','juez') NOT NULL DEFAULT 'juez';
+```
+
+> El `puesto` vive en la misma tabla `participantes` → el autoguardado es un `UPDATE` por fila en transacción.
+
+---
+
+## 3. Estructura de archivos
+
+```
+app/
+├── Http/Controllers/
+│   ├── AuthController.php          login/logout
+│   ├── JuezController.php          pantalla de lista (GET /juez)
+│   ├── GrupoController.php         API: grupos, participantes, guardar-orden, observación, historial
+│   └── ImportController.php        subida CSV vía web (admin, opcional)
+├── Http/Middleware/RolMiddleware.php
+├── Models/Participante.php         $guarded = [], sin casts
+├── Models/Observacion.php
+├── Models/PuestoAuditoria.php      solo lectura (insert lo hace GrupoController)
+└── Console/Commands/
+    ├── ImportarCsv.php             torneo:importar {ruta} {--fresh}
+    └── CrearJuez.php               juez:crear {email} {nombre} {password?}
+resources/views/
+├── layouts/app.blade.php           header sticky, toast, CDN jQuery
+├── auth/login.blade.php
+├── juez/index.blade.php            selects encadenados + lista + drag&drop
+└── admin/importar.blade.php        (opcional)
+public/css/app.css
+public/js/juez.js                   lógica de UI, debounce y autosave
+database/migrations/xxxx_create_participantes_table.php  (+ observaciones, + alter users.rol)
+```
+
+---
+
+## 4. Rutas
+
+```
+GET  /login                AuthController@mostrarLogin
+POST /login                AuthController@login      (Auth::attempt + redirect por rol)
+POST /logout               AuthController@logout
+
+GET  /                     redirect → /juez  (o /admin si rol=admin)
+
+-- juez (middleware auth)
+GET  /juez                 JuezController@index
+GET  /api/grupos           GrupoController@grupos     → árbol JSON con conteos
+GET  /api/participantes    GrupoController@lista      → ?disciplina=&categoria=&clase=&prueba=
+POST /api/guardar-orden    GrupoController@guardar    → {items:[{id,puesto}], grupo:{...}}
+POST /api/guardar-observacion GrupoController@observacion → {grupo:{...}, texto}
+GET  /api/historial/{participante} GrupoController@historial → [{created_at, user_nombre, puesto_anterior, puesto_nuevo}] (últimas 20)
+
+-- admin (middleware auth + rol=admin)
+POST /admin/importar       ImportController@importar
+```
+
+---
+
+## 5. Reglas de negocio (empates incluidos)
+
+1. **Clave de grupo:** `disciplina | categoria | clase_variante | dsc_prueba` (`dsc_prueba` = `''` si es NULL).
+   *Supuesto:* si una disciplina con métrica tiene `dsc_prueba`, ese valor también segmenta la lista.
+2. **Puestos con empates permitidos (por defecto):**
+   - Varios participantes pueden tener el mismo `puesto` (1° empatado, 2° empatado...).
+   - **No hay validación de unicidad** ni lógica de intercambio (más simple que la versión sin empates).
+   - Asignar un puesto desde el dropdown = escribirlo tal cual.
+   - Display: si 2+ comparten puesto → badge `1° (empate)`; orden `ORDER BY puesto, id`.
+   - `puesto NULL` = sin asignar, siempre al final de la lista.
+3. **Autoguardado:** cualquier cambio (dropdown, drag, limpiar) → recalcular puestos locales →
+   debounce **600 ms** → `POST /api/guardar-orden` → servidor hace `UPDATE` en **transacción**
+   (1 UPDATE por id) → toast `Guardado ✓`. Flag `guardando` anti-reentrada; si llega un cambio
+   mientras se guarda, se reprograma.
+4. **Concurrencia:** última escritura gana (uso único del sistema, aceptable).
+5. **Observación:** textarea por grupo, mismo debounce, upsert en `observaciones`.
+6. **Auditoría de puesto:** dentro del `DB::transaction` de guardar-orden, por cada fila cuyo `puesto`
+   realmente cambió → `INSERT` en `puesto_auditoria` (anterior, nuevo, user_id, user_nombre).
+   Si el puesto no cambió, no se inserta fila (evita ruido).
+
+---
+
+## 6. API — payload de guardar-orden
+
+```json
+POST /api/guardar-orden
+{
+  "grupo": {"disciplina":"ATLETISMO","categoria":"CATEGORÍA B","clase":"VARONES","prueba":"800 metros planos"},
+  "items": [ {"id": 101, "puesto": 1}, {"id": 102, "puesto": 1}, {"id": 103, "puesto": 2} ]
+}
+→ 200 {"ok":true}
+```
+Servidor: `DB::transaction(...)` → UPDATE por fila (puesto distinto por id) + `limpiar: true`
+pone en `NULL` los del grupo que no vengan en `items` (usado por el botón "Limpiar orden",
+que envía `items: []`). Dentro de la misma transacción se registra la auditoría (§5.6).
+
+---
+
+## 7. UI/UX (mobile-first, minimalista)
+
+- **Header sticky:** nombre del torneo, usuario, logout. Breadcrumb `Disciplina / Categoría / Clase / Prueba`.
+- **Navegación:** 3–4 `<select>` encadenados (Disciplina → Categoría → Clase → Prueba si aplica);
+  al cambiar uno se recarga vía AJAX. Badge con nº de clasificados.
+- **Fila (card):** badge de puesto (grande, izquierda) · nombre completo · IE / UGEL / Región ·
+  `<select>` de puesto (1..N) · handle de arrastre (☰). Mín. 56 px alto, touch ≥44 px.
+- **Drag & drop:** jQuery UI Sortable + touch-punch, `delay: 200, touchStartThreshold: 5` para no
+  robar el scroll; fallback con botones ↑/↓ por fila (accesibilidad / si el drag falla).
+- **Indicador de guardado:** `Guardando…` / `Guardado ✓` en el header + toast autohide 1.5 s.
+- **Buscador** por nombre o IE (filtro local en JS).
+- **Observación:** textarea colapsada `Observación del juez (opcional)`, mismo debounce.
+- **Botón** `Limpiar orden` (puestos → NULL) con `confirm()` del navegador.
+- **Historial de puesto:** botón pequeño por fila (icono 🕘, `aria-label="Historial"`, ≥44 px) que
+  abre un `modal` con tabla `Fecha/hora · Juez · Puesto anterior → nuevo`; datos vía
+  `GET /api/historial/{id}` al abrir. Solo lectura.
+- **Colores:** neutros + acento índigo; empatados en ámbar.
+
+---
+
+## 8. Importación CSV
+
+```bash
+php artisan torneo:importar "C:\xampp\htdocs\torneo\DATA GRAL.MACRO.csv" --fresh
+php artisan torneo:importar "C:\xampp\htdocs\torneo\GRAL-METRICAS.csv"     # añade pruebas/marcas
+```
+- Lee la **primera fila como encabezados** y mapea por nombre → acepta 28 o 31 columnas indistintamente
+  (columna ausente en el CSV → NULL en la BD).
+- **Encoding:** los CSV traen CP1252/ISO-8859-1 (`CATEGOR'A`, `SE�ORA`) → convertir a UTF-8
+  (`mb_convert_encoding($fila, 'UTF-8', 'Windows-1252')`) antes de insertar.
+- Fechas `d/m/Y` → `DATE`; `d/m/Y H:i` → `DATETIME` (`DateTime::createFromFormat`).
+- Insert en chunks de 500 con `insert()`; `--fresh` = `TRUNCATE` antes (importación idempotente).
+- Sustituto/Titular y `ESTADO_FICHA` se importan tal cual (el juez no filtra).
+
+---
+
+## 9. Usuarios juez
+
+```bash
+php artisan torneo:crear admin@torneo.pe "Admin"    secret admin
+php artisan torneo:crear juez1@torneo.pe "Juez Uno" secret juez
+```
+Acceso: **todos los jueces ven el árbol completo** disciplina > categoría > clase (decisión validada).
+Solo el admin ve `/admin/importar`.
+
+---
+
+## 10. Cronograma de implementación (~2 h)
+
+| # | Tarea | Min |
+|---|---|---|
+| 1 | `composer create-project laravel/laravel .`, `.env` MySQL, `php artisan migrate` | 15 |
+| 2 | Migración `participantes` + `observaciones` + `puesto_auditoria` + `users.rol`; modelos | 10 |
+| 3 | Auth (login/logout) + middleware rol + layout/login blade | 20 |
+| 4 | Comando `torneo:importar` + ejecutar con los CSV reales | 20 |
+| 5 | `GrupoController` (grupos, lista, guardar-orden + auditoría, observación, historial) | 35 |
+| 6 | UI: `juez/index.blade.php` + `app.css` + `juez.js` (autosave/sortable/empates/botón historial) | 45 |
+| 7 | Comando `juez:crear` + usuarios de prueba | 5 |
+| 8 | Verificación en móvil + laptop, ajustes finales | 10 |
+
+**Total ≈ 160 min.** Si hay retraso: eliminar `ImportController` web (ya cubierto por artisan)
+y el buscador local.
+
+---
+
+## 11. Puesta en producción
+
+1. `composer install --no-dev -o`
+2. `.env` (BD, `APP_URL`), `php artisan key:generate`
+3. `php artisan migrate --force`
+4. Importar CSVs (§8) y crear usuarios (§9)
+5. Document root → `public/`; permisos en `storage/` y `bootstrap/cache/`
+6. HTTPS recomendado (mejor experiencia táctil y futuras APIs en móvil)
+
+---
+
+## 12. Riesgos y decisiones asumidas
+
+| Riesgo | Mitención |
+|---|---|
+| Dos jueces editan la misma clase a la vez | Última escritura gana (uso único, aceptable) |
+| CSV en Latin-1/CP1252 con comillas | `fgetcsv` + conversión de encoding + BOM |
+| MySQL fuera de PATH en Windows | Ruta `C:\xampp\mysql\bin\` o agregar al PATH |
+| Drag & drop roba el scroll en móvil | `delay: 200` + touch-punch + fallback ↑/↓ |
+| Sin pruebas automatizadas | Checklist manual al final de §10 |
+| Empates (decisión) | **Permitidos** — simplifica endpoint y UI (§5.2) |
+
+---
+
+*Plan aprobado en modo Plan → Act. Fecha: 29/09/2026.*
+
