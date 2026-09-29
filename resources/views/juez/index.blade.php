@@ -77,5 +77,5 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/juez.js') }}"></script>
+    <script src="{{ asset('js/juez.js') }}?v={{ filemtime(public_path('js/juez.js')) }}"></script>
 @endpush

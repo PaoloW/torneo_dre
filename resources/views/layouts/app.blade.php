@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('titulo', 'Torneo Macro Regional 2026')</title>
     <link href="https://cdn.jsdelivr.net/npm/beercss@latest/dist/cdn/beer.min.css" rel="stylesheet">
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}" rel="stylesheet">
 </head>
 <body>
 <header class="cabecera">

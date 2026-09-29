@@ -85,13 +85,29 @@
     }
 
     /* ---------- selects encadenados ---------- */
+    // F1: refresca #sel-prueba según disciplina + clase elegidas.
+    // Siempre vacía el select, limpia el valor y lo rellena sin duplicados (se oculta si no hay).
+    function refrescarPrueba() {
+        seleccion.prueba = '';
+        var l = seleccionCompleta() ? nodoClase() : null;
+        var pruebas = [];
+        if (l && l.pruebas) {
+            l.pruebas.forEach(function (p) {
+                if (p && pruebas.indexOf(p) === -1) pruebas.push(p); // sin duplicados
+            });
+        }
+        var opciones = pruebas.map(function (p) { return { valor: p, texto: p }; });
+        llenarSelect($('#sel-prueba'), opciones, 'Todas');
+        $('#sel-prueba').val('');
+        $('#campo-prueba').prop('hidden', !opciones.length);
+    }
+
     function alCambiarDisciplina() {
         seleccion.disciplina = $('#sel-disciplina').val() || '';
-        seleccion.categoria = ''; seleccion.clase = ''; seleccion.prueba = '';
-        $('#campo-categoria, #campo-clase, #campo-prueba').prop('hidden', true);
+        seleccion.categoria = ''; seleccion.clase = '';
+        $('#campo-categoria, #campo-clase').prop('hidden', true);
         llenarSelect($('#sel-categoria'), []);
         llenarSelect($('#sel-clase'), []);
-        llenarSelect($('#sel-prueba'), [], 'Todas');
         if (seleccion.disciplina) {
             var d = nodoDisciplina();
             llenarSelect($('#sel-categoria'), d.categorias.map(function (c) {
@@ -99,15 +115,15 @@
             }));
             $('#campo-categoria').prop('hidden', false);
         }
+        refrescarPrueba();
         renderMigas(); cargarLista();
     }
 
     function alCambiarCategoria() {
         seleccion.categoria = $('#sel-categoria').val() || '';
-        seleccion.clase = ''; seleccion.prueba = '';
-        $('#campo-clase, #campo-prueba').prop('hidden', true);
+        seleccion.clase = '';
+        $('#campo-clase').prop('hidden', true);
         llenarSelect($('#sel-clase'), []);
-        llenarSelect($('#sel-prueba'), [], 'Todas');
         if (seleccion.categoria) {
             var c = nodoCategoria();
             llenarSelect($('#sel-clase'), c.clases.map(function (l) {
@@ -115,23 +131,13 @@
             }));
             $('#campo-clase').prop('hidden', false);
         }
+        refrescarPrueba();
         renderMigas(); cargarLista();
     }
 
     function alCambiarClase() {
         seleccion.clase = $('#sel-clase').val() || '';
-        seleccion.prueba = '';
-        $('#campo-prueba').prop('hidden', true);
-        llenarSelect($('#sel-prueba'), [], 'Todas');
-        var l = nodoClase();
-        if (l && l.con_pruebas) {
-            var pruebas = [];
-            l.pruebas.forEach(function (p) { if (p) pruebas.push({ valor: p, texto: p }); });
-            if (pruebas.length) {
-                llenarSelect($('#sel-prueba'), pruebas, 'Todas');
-                $('#campo-prueba').prop('hidden', false);
-            }
-        }
+        refrescarPrueba();
         renderMigas(); cargarLista();
     }
 

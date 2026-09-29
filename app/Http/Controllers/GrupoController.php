@@ -61,7 +61,7 @@ class GrupoController extends Controller
                     $clases[] = [
                         'clase' => $cla['clase'],
                         'total' => $cla['total'],
-                        'pruebas' => array_values($cla['pruebas']),
+                        'pruebas' => array_values(array_unique($cla['pruebas'])), // F1: sin duplicados
                         'con_pruebas' => array_filter($cla['pruebas']) !== [],
                     ];
                 }
