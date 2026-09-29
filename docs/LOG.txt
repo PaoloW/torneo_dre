@@ -41,3 +41,4 @@
 2026-09-29 13:55 → PLAN.md: añadidos fixes F13 (orden de filtros Categoría→Disciplina→Género→Clase→Prueba con buscador en dropdowns >5), F14 (dropdown Clase oculto con 1 sola clase) y F15 (conteo de clasificados en cada opción de Prueba) → Iniciado
 2026-09-29 14:10 → F13–F15 aplicados (index.blade.php, juez.js, app.css, GrupoController, pdf.blade.php, migración add_genero_to_observaciones): filtros en orden Categoría→Disciplina→Género→Clase→Prueba con combo buscable cuando hay más de 5 opciones, dropdown Clase oculto si hay 1 sola clase y nº de clasificados en cada opción de Prueba → Terminado
 2026-09-29 14:12 → Verificación F13–F15: E2E HTTP+BD sobre /torneo/public (33/33 OK) y test jsdom+jQuery sobre juez.js real (33/33 OK) → Terminado
+2026-09-29 14:44 → PLAN.md: añadidos fixes F16 (altura del combo Disciplina/Prueba igual a los selects) y F17 (valor visible + cierre del panel al elegir opción en el combo) → Iniciado
