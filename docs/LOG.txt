@@ -33,3 +33,5 @@
 
 
 
+
+2026-09-29 14:00 → PLAN.md: añadidos fixes F11 (autoselección de categoría/clase única + carga de participantes) y F12 (dropdown de puesto con filtro al tipear cuando hay más de 5 puestos) → Iniciado
