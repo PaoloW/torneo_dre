@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GrupoController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\JuezController;
+use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -37,5 +38,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/resultados', [JuezController::class, 'resultados'])->name('admin.resultados');
         Route::get('/importar', [ImportController::class, 'mostrarFormulario']);
         Route::post('/importar', [ImportController::class, 'importar']);
+        // F5: gestión de usuarios (crear y editar nombre/contraseña)
+        Route::get('/usuarios', [UsuarioController::class, 'index'])->name('admin.usuarios');
+        Route::post('/usuarios/crear', [UsuarioController::class, 'crear']);
+        Route::post('/usuarios/{id}/actualizar', [UsuarioController::class, 'actualizar']);
     });
 });

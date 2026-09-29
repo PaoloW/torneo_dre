@@ -21,6 +21,8 @@
                    href="{{ url('/admin/resultados') }}">Resultados</a>
                 <a class="cabecera-enlace{{ request()->is('admin/importar') ? ' activo' : '' }}"
                    href="{{ url('/admin/importar') }}">Importar CSV</a>
+                <a class="cabecera-enlace{{ request()->is('admin/usuarios') ? ' activo' : '' }}"
+                   href="{{ url('/admin/usuarios') }}">Usuarios</a>
             @endif
             <span class="cabecera-usuario">{{ auth()->user()->name }}</span>
             <form method="POST" action="{{ route('logout') }}" class="form-logout">
