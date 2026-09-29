@@ -12,7 +12,7 @@ class JuezController extends Controller
     {
         // F2: el admin solo consulta, se le envía a la vista de solo lectura
         if (request()->user() && request()->user()->rol === 'admin') {
-            return redirect('/admin/resultados');
+            return redirect()->route('admin.resultados'); // F19
         }
 
         return view('juez.index', ['soloLectura' => false]);

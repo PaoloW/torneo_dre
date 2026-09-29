@@ -7,7 +7,7 @@
 
     var DEBOUNCE = 600; // ms de autoguardado
 
-    var arbol = [];              // F13: filas planas desde /api/grupos {categoria, disciplina, genero, clase, prueba, total}
+    var arbol = [];              // F13: filas planas desde RUTAS.grupos {categoria, disciplina, genero, clase, prueba, total}
     var participantes = [];      // filas del grupo actual
     // F13: orden de los filtros (la categoría es la raíz; el género entra en la clave de grupo)
     var CAMPOS = ['categoria', 'disciplina', 'genero', 'clase', 'prueba'];
@@ -19,6 +19,8 @@
     var pendiente = false;       // hubo cambios mientras se guardaba
     var limpiarBandera = false;  // el próximo guardado limpia el grupo
     var SOLO_LECTURA = false;    // F2: vista admin → solo lectura (sin edición)
+    // F20: rutas inyectadas por el layout con route() (window.RUTAS) → sin paths escritos a mano en el JS
+    var RUTAS = window.RUTAS || {};
 
     /* ---------- utilidades ---------- */
     function esc(valor) {
@@ -57,7 +59,7 @@
 
     /* ---------- F13: filtros encadenados Categoría → Disciplina → Género → Clase → Prueba ---------- */
     function cargarGrupos() {
-        $.getJSON('/api/grupos')
+        $.getJSON(RUTAS.grupos)
             .done(function (datos) {
                 arbol = datos;
                 renderFiltro('categoria'); // primer filtro, siempre visible
@@ -210,7 +212,7 @@
             render();
             return;
         }
-        $.getJSON('/api/participantes', seleccion)
+        $.getJSON(RUTAS.participantes, seleccion)
             .done(function (data) {
                 participantes = data.participantes || [];
                 $('#observacion').val(data.observacion || '');
@@ -358,7 +360,7 @@
         limpiarBandera = false;
 
         $.ajax({
-            url: '/api/guardar-orden',
+            url: RUTAS.guardarOrden,
             method: 'POST',
             contentType: 'application/json',
             dataType: 'json',
@@ -531,7 +533,7 @@
     function guardarObservacion() {
         if (!seleccionCompleta()) return;
         $.ajax({
-            url: '/api/guardar-observacion',
+            url: RUTAS.guardarObservacion,
             method: 'POST',
             contentType: 'application/json',
             dataType: 'json',
@@ -574,7 +576,7 @@
         $('#historial-cuerpo').empty();
         $('#historial-vacio').prop('hidden', true);
 
-        $.getJSON('/api/historial/' + id)
+        $.getJSON(String(RUTAS.historial).replace('__ID__', encodeURIComponent(id)))
             .done(function (filas) {
                 var html = '';
                 filas.forEach(function (f) {
@@ -661,7 +663,7 @@
         // F3: exporta el grupo filtrado en una pestaña nueva (preview web → Imprimir / Guardar PDF)
         $('#btn-pdf').on('click', function () {
             if (!seleccionCompleta()) return;
-            window.open('/resultados/pdf?' + $.param(seleccion), '_blank');
+            window.open(RUTAS.pdf + '?' + $.param(seleccion), '_blank');
         });
         $('#observacion').on('input', programarObservacion);
         $('#btn-cerrar-historial').on('click', function () {

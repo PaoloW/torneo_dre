@@ -39,6 +39,21 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+{{-- F20: rutas del frontend generadas con route() e inyectadas a public/js/juez.js (sin paths escritos a mano) --}}
+@php
+    $rutasFront = [
+        'grupos' => route('api.grupos'),
+        'participantes' => route('api.participantes'),
+        'guardarOrden' => route('api.guardar-orden'),
+        'guardarObservacion' => route('api.guardar-observacion'),
+        'historial' => route('api.historial', ['participante' => '__ID__']),
+        'pdf' => route('resultados.pdf'),
+    ];
+@endphp
+<script>
+    window.RUTAS = @json($rutasFront);
+</script>
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-ui-touch-punch@0.2.3/jquery.ui.touch-punch.min.js"></script>

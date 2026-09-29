@@ -13,7 +13,7 @@ class AuthController extends Controller
     public function mostrarLogin(): View|RedirectResponse
     {
         if (Auth::check()) {
-            return redirect('/');
+            return redirect()->route('inicio'); // F19
         }
 
         return view('auth.login');
@@ -33,7 +33,7 @@ class AuthController extends Controller
         if (Auth::attempt($credenciales, $request->boolean('recordar'))) {
             $request->session()->regenerate();
 
-            return redirect()->intended('/');
+            return redirect()->intended(route('inicio')); // F19
         }
 
         return back()
@@ -49,6 +49,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        return redirect()->route('login'); // F19
     }
 }

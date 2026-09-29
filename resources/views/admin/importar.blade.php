@@ -15,7 +15,7 @@
             La primera fila debe contener los encabezados.
         </p>
 
-        <form method="POST" action="{{ route('admin.importar') }}" enctype="multipart/form-data" class="form-importar">
+        <form method="POST" action="{{ route('admin.importar.procesar') }}" enctype="multipart/form-data" class="form-importar">
             @csrf
             <label class="campo">
                 <span>Archivo CSV</span>

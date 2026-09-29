@@ -44,7 +44,7 @@ class UsuarioController extends Controller
             'rol' => $datos['rol'],
         ]);
 
-        return redirect('/admin/usuarios')->with('exito', "Usuario {$datos['usuario']} creado.");
+        return redirect()->route('admin.usuarios')->with('exito', "Usuario {$datos['usuario']} creado."); // F19
     }
 
     // POST /admin/usuarios/{id}/actualizar → edita nombre y/o contraseña (vacío = no cambia)
@@ -75,6 +75,6 @@ class UsuarioController extends Controller
 
         DB::table('users')->where('id', $usuario->id)->update($actualizaciones);
 
-        return redirect('/admin/usuarios')->with('exito', "Usuario {$usuario->usuario} actualizado.");
+        return redirect()->route('admin.usuarios')->with('exito', "Usuario {$usuario->usuario} actualizado."); // F19
     }
 }
