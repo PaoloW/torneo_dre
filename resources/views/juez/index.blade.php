@@ -6,36 +6,34 @@
 <div class="contenedor{{ $soloLectura ? ' solo-lectura' : '' }}" id="vista-resultados"
      data-solo-lectura="{{ $soloLectura ? 'true' : 'false' }}">
     <nav class="migas" aria-label="Ruta de navegación" id="migas">
-        <span>Disciplina</span>
+        <span>Categoría</span>
     </nav>
 
     <div class="navegacion">
-        <label class="campo">
-            <span>Disciplina</span>
-            <select id="sel-disciplina">
-                <option value="">Seleccione…</option>
-            </select>
+        <!-- F13: orden de filtros Categoría → Disciplina → Género → Clase → Prueba -->
+        <label class="campo" id="campo-categoria">
+            <span>Categoría</span>
+            <div class="filtro" id="filtro-categoria"></div>
         </label>
 
-        <label class="campo" id="campo-categoria" hidden>
-            <span>Categoría</span>
-            <select id="sel-categoria">
-                <option value="">Seleccione…</option>
-            </select>
+        <label class="campo" id="campo-disciplina" hidden>
+            <span>Disciplina</span>
+            <div class="filtro" id="filtro-disciplina"></div>
+        </label>
+
+        <label class="campo" id="campo-genero" hidden>
+            <span>Género</span>
+            <div class="filtro" id="filtro-genero"></div>
         </label>
 
         <label class="campo" id="campo-clase" hidden>
             <span>Clase</span>
-            <select id="sel-clase">
-                <option value="">Seleccione…</option>
-            </select>
+            <div class="filtro" id="filtro-clase"></div>
         </label>
 
         <label class="campo" id="campo-prueba" hidden>
             <span>Prueba</span>
-            <select id="sel-prueba">
-                <option value="">Todas</option>
-            </select>
+            <div class="filtro" id="filtro-prueba"></div>
         </label>
 
         <span id="badge-clasificados" class="badge-contador" hidden>0 clasificados</span>
@@ -59,7 +57,7 @@
 
     <ul id="lista" class="lista" aria-label="Clasificados"></ul>
 
-    <p id="vacio" class="vacio" hidden>Seleccione disciplina, categoría y clase para ver los clasificados.</p>
+    <p id="vacio" class="vacio" hidden>Seleccione categoría, disciplina, género y clase para ver los clasificados.</p>
 
     <!-- F10: observación movida al final de la vista -->
     <br>

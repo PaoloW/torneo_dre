@@ -7,9 +7,12 @@
 
     var DEBOUNCE = 600; // ms de autoguardado
 
-    var arbol = [];              // árbol desde /api/grupos
+    var arbol = [];              // F13: filas planas desde /api/grupos {categoria, disciplina, genero, clase, prueba, total}
     var participantes = [];      // filas del grupo actual
-    var seleccion = { disciplina: '', categoria: '', clase: '', prueba: '' };
+    // F13: orden de los filtros (la categoría es la raíz; el género entra en la clave de grupo)
+    var CAMPOS = ['categoria', 'disciplina', 'genero', 'clase', 'prueba'];
+    var ETIQUETAS = { categoria: 'Categoría', disciplina: 'Disciplina', genero: 'Género', clase: 'Clase', prueba: 'Prueba' };
+    var seleccion = { categoria: '', disciplina: '', genero: '', clase: '', prueba: '' };
     var temporizador = null;     // debounce de guardar-orden
     var tempObs = null;          // debounce de observación
     var guardando = false;       // bandera anti-reentrada
@@ -52,121 +55,140 @@
         return 'Error al guardar (' + xhr.status + ')';
     }
 
-    /* ---------- árbol y selects encadenados ---------- */
+    /* ---------- F13: filtros encadenados Categoría → Disciplina → Género → Clase → Prueba ---------- */
     function cargarGrupos() {
         $.getJSON('/api/grupos')
             .done(function (datos) {
                 arbol = datos;
-                llenarSelect($('#sel-disciplina'), arbol.map(function (d) {
-                    return { valor: d.disciplina, texto: d.disciplina + ' (' + d.total + ')' };
-                }));
+                renderFiltro('categoria'); // primer filtro, siempre visible
+                if (seleccion.categoria) { // categoría única → cascada automática
+                    refrescarDesde('categoria');
+                    renderMigas(); cargarLista();
+                }
             })
             .fail(function () { toast('No se pudo cargar el árbol de grupos', 'error'); });
     }
 
-    function llenarSelect($select, opciones, etiqueta) {
-        $select.empty().append($('<option>').val('').text(etiqueta || 'Seleccione…'));
-        opciones.forEach(function (op) {
-            $select.append($('<option>').val(op.valor).text(op.texto));
+    // Opciones de un filtro: valores distintos del campo según lo ya seleccionado, con sus clasificados
+    function opcionesCampo(campo) {
+        var idx = CAMPOS.indexOf(campo);
+        var previos = CAMPOS.slice(0, idx);
+        var mapa = {};
+        arbol.forEach(function (f) {
+            for (var i = 0; i < previos.length; i++) {
+                var v = seleccion[previos[i]];
+                if (v && String(f[previos[i]]) !== v) return;
+            }
+            mapa[f[campo]] = (mapa[f[campo]] || 0) + f.total;
         });
+        return Object.keys(mapa)
+            .sort(function (a, b) { return a.localeCompare(b, 'es'); })
+            .map(function (valor) { return { valor: valor, total: mapa[valor] }; });
     }
 
-    function nodoDisciplina() {
-        return arbol.find(function (d) { return d.disciplina === seleccion.disciplina; }) || null;
+    // etiqueta de una opción → "Nombre (N)" con el nº de clasificados (F15)
+    function textoOpcion(campo, opcion) {
+        var nombre = opcion.valor === '' ? (campo === 'prueba' ? 'Todas' : '—') : opcion.valor;
+        return nombre + ' (' + opcion.total + ')';
     }
 
-    function nodoCategoria() {
-        var d = nodoDisciplina();
-        return d ? (d.categorias.find(function (c) { return c.categoria === seleccion.categoria; }) || null) : null;
-    }
+    // Pinta el control de un filtro: <select> nativo con ≤5 opciones, o combo con input de
+    // búsqueda si hay más de 5 (F13). Devuelve false si no hay opciones (queda oculto).
+    function renderFiltro(campo) {
+        var $campo = $('#campo-' + campo);
+        var $caja = $('#filtro-' + campo);
+        $caja.empty();
+        seleccion[campo] = '';
 
-    function nodoClase() {
-        var c = nodoCategoria();
-        return c ? (c.clases.find(function (l) { return l.clase === seleccion.clase; }) || null) : null;
-    }
+        var opciones = opcionesCampo(campo);
+        var items;
 
-    /* ---------- selects encadenados ---------- */
-    // F1: refresca #sel-prueba según disciplina + clase elegidas.
-    // Siempre vacía el select, limpia el valor y lo rellena sin duplicados (se oculta si no hay).
-    function refrescarPrueba() {
-        seleccion.prueba = '';
-        var l = seleccionCompleta() ? nodoClase() : null;
-        var pruebas = [];
-        if (l && l.pruebas) {
-            l.pruebas.forEach(function (p) {
-                if (p && pruebas.indexOf(p) === -1) pruebas.push(p); // sin duplicados
+        if (campo === 'prueba') {
+            // F15: cada opción muestra su nº de clasificados; sin pruebas → dropdown oculto
+            var reales = opciones.filter(function (o) { return o.valor !== ''; });
+            if (!reales.length) {
+                $campo.prop('hidden', true);
+                return false;
+            }
+            var sinPrueba = opciones.find(function (o) { return o.valor === ''; }) || { valor: '', total: 0 };
+            items = [sinPrueba].concat(reales); // "Todas" primero
+        } else {
+            if (!opciones.length) {
+                $campo.prop('hidden', true);
+                return false;
+            }
+            items = opciones;
+            if (opciones.length === 1) seleccion[campo] = opciones[0].valor; // opción única → auto (F11)
+        }
+
+        // F14: una sola clase en la disciplina → dropdown oculto (clase ya elegida)
+        $campo.prop('hidden', campo === 'clase' && opciones.length === 1);
+
+        var html = '';
+        if (opciones.length <= 5) {
+            // ≤5 opciones → select nativo
+            html = '<select class="sel-filtro" data-campo="' + campo + '" aria-label="' + ETIQUETAS[campo] + '">';
+            if (campo !== 'prueba') html += '<option value="">Seleccione…</option>';
+            items.forEach(function (it) {
+                html += '<option value="' + esc(it.valor) + '"' + (it.valor === seleccion[campo] ? ' selected' : '') + '>' +
+                    esc(textoOpcion(campo, it)) + '</option>';
             });
+            html += '</select>';
+        } else {
+            // >5 opciones → combo con input de búsqueda (misma mecánica que F12)
+            var etiqueta = campo === 'prueba' ? 'Todas' : 'Seleccione…';
+            var lista = '';
+            items.forEach(function (it) {
+                var activa = it.valor === seleccion[campo];
+                if (activa) etiqueta = textoOpcion(campo, it);
+                lista += '<li data-valor="' + esc(it.valor) + '"' + (activa ? ' class="activa"' : '') + '>' +
+                    esc(textoOpcion(campo, it)) + '</li>';
+            });
+            html = '<div class="combo-campo" data-campo="' + campo + '">' +
+                    '<button type="button" class="combo-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="' + ETIQUETAS[campo] + '">' + esc(etiqueta) + '</button>' +
+                    '<div class="combo-panel" hidden>' +
+                        '<input type="text" class="combo-filtro" placeholder="Buscar ' + ETIQUETAS[campo].toLowerCase() + '…" autocomplete="off" aria-label="Buscar ' + ETIQUETAS[campo] + '">' +
+                        '<ul class="combo-lista" role="listbox">' + lista + '</ul>' +
+                        '<p class="combo-vacio" hidden>Sin coincidencias</p>' +
+                    '</div>' +
+                '</div>';
         }
-        var opciones = pruebas.map(function (p) { return { valor: p, texto: p }; });
-        llenarSelect($('#sel-prueba'), opciones, 'Todas');
-        $('#sel-prueba').val('');
-        $('#campo-prueba').prop('hidden', !opciones.length);
+        $caja.html(html);
+        return true;
     }
 
-    // F11: llena #sel-clase según la categoría elegida y, si solo hay 1 clase, la elige por defecto
-    function refrescarClase() {
-        seleccion.clase = '';
-        $('#campo-clase').prop('hidden', true);
-        llenarSelect($('#sel-clase'), []);
-        var c = nodoCategoria();
-        if (!c) return;
-        llenarSelect($('#sel-clase'), c.clases.map(function (l) {
-            return { valor: l.clase, texto: l.clase + ' (' + l.total + ')' };
-        }));
-        $('#campo-clase').prop('hidden', false);
-        if (c.clases.length === 1) { // F11: única clase → elegida por defecto
-            seleccion.clase = c.clases[0].clase;
-            $('#sel-clase').val(seleccion.clase);
-        }
-    }
-
-    function alCambiarDisciplina() {
-        seleccion.disciplina = $('#sel-disciplina').val() || '';
-        seleccion.categoria = ''; seleccion.clase = '';
-        $('#campo-categoria').prop('hidden', true);
-        llenarSelect($('#sel-categoria'), []);
-        refrescarClase(); // F11: limpia la clase heredada
-        if (seleccion.disciplina) {
-            var d = nodoDisciplina();
-            llenarSelect($('#sel-categoria'), d.categorias.map(function (c) {
-                return { valor: c.categoria, texto: c.categoria + ' (' + c.total + ')' };
-            }));
-            $('#campo-categoria').prop('hidden', false);
-            if (d.categorias.length === 1) { // F11: única categoría → elegida por defecto
-                seleccion.categoria = d.categorias[0].categoria;
-                $('#sel-categoria').val(seleccion.categoria);
-                refrescarClase(); // carga las clases y auto-elige si hay una sola
+    // Tras cambiar un filtro: repinta los siguientes; se detiene si no hay opciones o si
+    // el siguiente requiere que el usuario elija (queda visible y el resto oculto)
+    function refrescarDesde(campo) {
+        var idx = CAMPOS.indexOf(campo);
+        for (var i = idx + 1; i < CAMPOS.length; i++) {
+            var ok = renderFiltro(CAMPOS[i]);
+            var requiereEleccion = CAMPOS[i] !== 'prueba' && !seleccion[CAMPOS[i]];
+            if (!ok || requiereEleccion) {
+                for (var j = i + 1; j < CAMPOS.length; j++) { // limpia y oculta el resto
+                    seleccion[CAMPOS[j]] = '';
+                    $('#campo-' + CAMPOS[j]).prop('hidden', true);
+                    $('#filtro-' + CAMPOS[j]).empty();
+                }
+                return;
             }
         }
-        refrescarPrueba();
-        renderMigas(); cargarLista();
     }
 
-    function alCambiarCategoria() {
-        seleccion.categoria = $('#sel-categoria').val() || '';
-        refrescarClase(); // F11: auto-selecciona la clase si solo hay 1 y limpia si hay varias
-        refrescarPrueba();
-        renderMigas(); cargarLista();
-    }
-
-    function alCambiarClase() {
-        seleccion.clase = $('#sel-clase').val() || '';
-        refrescarPrueba();
-        renderMigas(); cargarLista();
-    }
-
-    function alCambiarPrueba() {
-        seleccion.prueba = $('#sel-prueba').val() || '';
+    function alCambiarFiltro(campo, valor) {
+        seleccion[campo] = valor || '';
+        refrescarDesde(campo);
         renderMigas(); cargarLista();
     }
 
     function seleccionCompleta() {
-        return seleccion.disciplina && seleccion.categoria && seleccion.clase;
+        // F13: grupo completo = categoría + disciplina + género + clase (la prueba es opcional: Todas)
+        return seleccion.categoria && seleccion.disciplina && seleccion.genero && seleccion.clase;
     }
 
     function renderMigas() {
-        var niveles = ['Disciplina', 'Categoría', 'Clase', 'Prueba'];
-        var valores = [seleccion.disciplina, seleccion.categoria, seleccion.clase, seleccion.prueba];
+        var niveles = CAMPOS.map(function (c) { return ETIQUETAS[c]; }); // F13: Categoría / Disciplina / Género / Clase / Prueba
+        var valores = CAMPOS.map(function (c) { return seleccion[c]; });
         var ultimo = 0;
         valores.forEach(function (v, i) { if (v) ultimo = i; });
         var html = '';
@@ -281,7 +303,7 @@
         $lista.empty();
 
         if (!seleccionCompleta()) {
-            $vacio.text('Seleccione disciplina, categoría y clase para ver los clasificados.').prop('hidden', false);
+            $vacio.text('Seleccione categoría, disciplina, género y clase para ver los clasificados.').prop('hidden', false);
         } else if (!participantes.length) {
             $vacio.text('No hay clasificados en este grupo.').prop('hidden', false);
         } else {
@@ -582,13 +604,50 @@
         iniciarSortable();
         eventosLista();
 
-        $('#sel-disciplina').on('change', alCambiarDisciplina);
-        $('#sel-categoria').on('change', alCambiarCategoria);
-        $('#sel-clase').on('change', alCambiarClase);
-        $('#sel-prueba').on('change', alCambiarPrueba);
-        // F12: el combo de puesto se cierra al pulsar fuera de él (el filtro no lo cierra)
+        // F13: filtros encadenados (select nativo o combo con buscador); se repintan → handlers delegados
+        $('.navegacion').on('change', 'select.sel-filtro', function () {
+            alCambiarFiltro($(this).data('campo'), $(this).val());
+        });
+        $('.navegacion').on('click', '.combo-btn', function (e) {
+            e.stopPropagation();
+            var $panel = $(this).siblings('.combo-panel');
+            var abrir = $panel.prop('hidden');
+            cerrarCombos();
+            $panel.prop('hidden', !abrir);
+            $(this).attr('aria-expanded', String(abrir));
+            if (abrir) $panel.find('.combo-filtro').val('').trigger('input').focus();
+        });
+        // F13: filtra las opciones del combo al tipear (subcadena)
+        $('.navegacion').on('input', '.combo-filtro', function () {
+            var texto = String($(this).val() || '').toLowerCase().trim();
+            var $panel = $(this).closest('.combo-panel');
+            var visibles = 0;
+            $panel.find('.combo-lista li').each(function () {
+                var coincide = !texto || $(this).text().toLowerCase().indexOf(texto) !== -1;
+                $(this).prop('hidden', !coincide);
+                if (coincide) visibles++;
+            });
+            $panel.find('.combo-vacio').prop('hidden', visibles > 0); // "Sin coincidencias"
+        });
+        // F13: Enter elige la primera opción visible; Esc cierra el combo
+        $('.navegacion').on('keydown', '.combo-filtro', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                var $primero = $(this).closest('.combo-panel').find('.combo-lista li:not([hidden])').first();
+                if ($primero.length) $primero.trigger('click');
+            } else if (e.key === 'Escape') {
+                cerrarCombos();
+            }
+        });
+        // F13: elegir una opción del combo de filtro (cierra el panel y aplica el filtro)
+        $('.navegacion').on('click', '.combo-lista li', function (e) {
+            e.stopPropagation();
+            cerrarCombos();
+            alCambiarFiltro($(this).closest('.combo-campo').data('campo'), String($(this).attr('data-valor') || ''));
+        });
+        // F12: los combos (puesto y filtros) se cierran al pulsar fuera de ellos
         $(document).on('click', function (e) {
-            if ($(e.target).closest('.combo-puesto').length) return;
+            if ($(e.target).closest('.combo-puesto, .combo-campo').length) return;
             cerrarCombos();
         });
         $('#buscador').on('input', aplicarBuscador);

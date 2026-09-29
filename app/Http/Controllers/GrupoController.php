@@ -12,68 +12,25 @@ use Illuminate\View\View;
 class GrupoController extends Controller
 {
     /**
-     * GET /api/grupos → árbol disciplina > categoría > clase (con pruebas) y conteos.
+     * GET /api/grupos → filas planas por (categoría, disciplina, género, clase, prueba) con conteos.
+     * F13: el front arma el cascada Categoría → Disciplina → Género → Clase → Prueba
+     * y muestra el nº de clasificados en cada opción.
      */
     public function grupos(): JsonResponse
     {
         $filas = DB::table('participantes')
-            ->selectRaw('disciplina, categoria, clase_variante, COALESCE(dsc_prueba, "") AS prueba, COUNT(*) AS total')
+            ->selectRaw('categoria, disciplina, genero, COALESCE(clase_variante, "") AS clase, COALESCE(dsc_prueba, "") AS prueba, COUNT(*) AS total')
             ->whereNotNull('disciplina')
             ->where('disciplina', '<>', '')
-            ->groupBy('disciplina', 'categoria', 'clase_variante', DB::raw('COALESCE(dsc_prueba, "")'))
-            ->orderBy('disciplina')
+            ->groupBy('categoria', 'disciplina', 'genero', DB::raw('COALESCE(clase_variante, "")'), DB::raw('COALESCE(dsc_prueba, "")'))
             ->orderBy('categoria')
-            ->orderBy('clase_variante')
+            ->orderBy('disciplina')
+            ->orderBy('genero')
+            ->orderBy('clase')
             ->orderBy('prueba')
             ->get();
 
-        $arbol = [];
-
-        foreach ($filas as $fila) {
-            $disciplina = $fila->disciplina;
-            $categoria = $fila->categoria;
-            $clase = $fila->clase_variante;
-
-            if (! isset($arbol[$disciplina])) {
-                $arbol[$disciplina] = ['disciplina' => $disciplina, 'total' => 0, 'categorias' => []];
-            }
-            if (! isset($arbol[$disciplina]['categorias'][$categoria])) {
-                $arbol[$disciplina]['categorias'][$categoria] = ['categoria' => $categoria, 'total' => 0, 'clases' => []];
-            }
-            if (! isset($arbol[$disciplina]['categorias'][$categoria]['clases'][$clase])) {
-                $arbol[$disciplina]['categorias'][$categoria]['clases'][$clase] = [
-                    'clase' => $clase, 'total' => 0, 'pruebas' => [],
-                ];
-            }
-
-            $arbol[$disciplina]['total'] += $fila->total;
-            $arbol[$disciplina]['categorias'][$categoria]['total'] += $fila->total;
-            $arbol[$disciplina]['categorias'][$categoria]['clases'][$clase]['total'] += $fila->total;
-            $arbol[$disciplina]['categorias'][$categoria]['clases'][$clase]['pruebas'][] = $fila->prueba;
-        }
-
-        // reindexa arrays anidados para que lleguen como listas JSON
-        $salida = [];
-        foreach ($arbol as $nodo) {
-            $categorias = [];
-            foreach ($nodo['categorias'] as $cat) {
-                $clases = [];
-                foreach ($cat['clases'] as $cla) {
-                    $clases[] = [
-                        'clase' => $cla['clase'],
-                        'total' => $cla['total'],
-                        'pruebas' => array_values(array_unique($cla['pruebas'])), // F1: sin duplicados
-                        'con_pruebas' => array_filter($cla['pruebas']) !== [],
-                    ];
-                }
-                $cat['clases'] = $clases;
-                $categorias[] = $cat;
-            }
-            $nodo['categorias'] = $categorias;
-            $salida[] = $nodo;
-        }
-
-        return response()->json($salida);
+        return response()->json($filas);
     }
 
     /**
@@ -85,6 +42,7 @@ class GrupoController extends Controller
         $datos = $request->validate([
             'disciplina' => ['required', 'string'],
             'categoria' => ['required', 'string'],
+            'genero' => ['required', 'string'], // F13: DAMAS / VARONES
             'clase' => ['required', 'string'],
             'prueba' => ['nullable', 'string'],
         ]);
@@ -103,6 +61,7 @@ class GrupoController extends Controller
         $datos = $request->validate([
             'disciplina' => ['required', 'string'],
             'categoria' => ['required', 'string'],
+            'genero' => ['required', 'string'], // F13: DAMAS / VARONES
             'clase' => ['required', 'string'],
             'prueba' => ['nullable', 'string'],
         ]);
@@ -111,8 +70,9 @@ class GrupoController extends Controller
 
         return view('juez.pdf', [
             'grupo' => [
-                'disciplina' => $datos['disciplina'],
                 'categoria' => $datos['categoria'],
+                'disciplina' => $datos['disciplina'],
+                'genero' => $datos['genero'],
                 'clase' => $datos['clase'],
                 'prueba' => $datos['prueba'] ?? '',
             ],
@@ -133,6 +93,7 @@ class GrupoController extends Controller
         $participantes = Participante::query()
             ->where('disciplina', $datos['disciplina'])
             ->where('categoria', $datos['categoria'])
+            ->where('genero', $datos['genero']) // F13: DAMAS y VARONES por separado
             ->where('clase_variante', $datos['clase'])
             ->whereRaw('COALESCE(dsc_prueba, "") = ?', [$prueba])
             ->orderByRaw('puesto IS NULL')   // sin puesto → al final
@@ -147,6 +108,7 @@ class GrupoController extends Controller
         $observacion = Observacion::query()
             ->where('disciplina', $datos['disciplina'])
             ->where('categoria', $datos['categoria'])
+            ->where('genero', $datos['genero']) // F13
             ->where('clase', $datos['clase'])
             ->where('prueba', $prueba)
             ->value('texto');
@@ -168,6 +130,7 @@ class GrupoController extends Controller
         $datos = $request->validate([
             'grupo.disciplina' => ['required', 'string'],
             'grupo.categoria' => ['required', 'string'],
+            'grupo.genero' => ['required', 'string'], // F13
             'grupo.clase' => ['required', 'string'],
             'grupo.prueba' => ['nullable', 'string'],
             'items' => ['present', 'array'],   // 'present' admite [] (botón Limpiar orden)
@@ -191,6 +154,7 @@ class GrupoController extends Controller
             $filas = DB::table('participantes')
                 ->where('disciplina', $grupo['disciplina'])
                 ->where('categoria', $grupo['categoria'])
+                ->where('genero', $grupo['genero']) // F13: no toca al otro género
                 ->where('clase_variante', $grupo['clase'])
                 ->whereRaw('COALESCE(dsc_prueba, "") = ?', [$prueba])
                 ->lockForUpdate()
@@ -232,6 +196,7 @@ class GrupoController extends Controller
         $datos = $request->validate([
             'grupo.disciplina' => ['required', 'string'],
             'grupo.categoria' => ['required', 'string'],
+            'grupo.genero' => ['required', 'string'], // F13
             'grupo.clase' => ['required', 'string'],
             'grupo.prueba' => ['nullable', 'string'],
             'texto' => ['nullable', 'string'],
@@ -243,6 +208,7 @@ class GrupoController extends Controller
             [
                 'disciplina' => $grupo['disciplina'],
                 'categoria' => $grupo['categoria'],
+                'genero' => $grupo['genero'],
                 'clase' => $grupo['clase'],
                 'prueba' => $grupo['prueba'] ?? '',
             ],

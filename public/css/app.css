@@ -293,6 +293,28 @@ body {
 .combo-lista li.activa { background: var(--acento); color: #fff; }
 .combo-vacio { margin: .2rem .1rem; font-size: .8rem; color: var(--texto-suave); }
 
+/* F13: filtros con combo buscable cuando el dropdown tiene más de 5 opciones */
+.combo-campo { position: relative; }
+.campo .combo-campo .combo-btn {
+    width: 100%;
+    min-height: 44px;
+    padding: .5rem .65rem;
+    border: 1px solid var(--borde);
+    border-radius: .5rem;
+    background: #fff;
+    color: var(--texto);
+    font-size: 1rem;
+    font-weight: 400;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.campo .combo-campo .combo-btn:hover { border-color: var(--acento); color: var(--acento); }
+.campo .combo-campo .combo-panel { left: 0; right: 0; } /* panel a todo el ancho del filtro */
+.campo .combo-campo .combo-lista li { font-weight: 600; }
+
 .movs { display: none; flex-direction: column; }
 @media (min-width: 700px) { .movs { display: flex; } }
 .movs .btn-icono { min-height: 26px; min-width: 30px; font-size: .8rem; line-height: 1; }

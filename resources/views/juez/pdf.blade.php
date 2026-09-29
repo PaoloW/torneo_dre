@@ -59,7 +59,8 @@
 
 @php
     $conteos = $participantes->filter(fn ($p) => $p->puesto !== null)->countBy(fn ($p) => $p->puesto);
-    $ruta = $grupo['disciplina'] . ' / ' . $grupo['categoria'] . ' / ' . $grupo['clase']
+    // F13: mismo orden que las migas del juez → Categoría / Disciplina / Género / Clase / Prueba
+    $ruta = $grupo['categoria'] . ' / ' . $grupo['disciplina'] . ' / ' . $grupo['genero'] . ' / ' . $grupo['clase']
         . ($grupo['prueba'] !== '' ? ' / ' . $grupo['prueba'] : '');
 @endphp
 
