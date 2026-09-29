@@ -21,5 +21,10 @@
 
 
 
+2026-09-29 11:38 → F4: seeder UsuariosSeeder (admin/juez1/juez2, contraseña alfanumérica 8 chars), columna users.usuario y login por usuario → Terminado
+2026-09-29 11:44 → F5: UsuarioController + /admin/usuarios (crear, editar nombre/contraseña) + vista y nav header → Terminado
+2026-09-29 11:47 → F6: CSS ≤699px en .fila → acciones en 1ª línea, datos del clasificado en 2ª línea sin truncar → Terminado
+2026-09-29 11:50 → Verificación E2E HTTP: login por usuario, CRUD usuarios, permisos 403, seeder idempotente, CSS responsive (16/16) → Terminado
+
 2026-09-29 11:26 → PLAN.md: añadidos fixes F4 (seeder usuarios + login por usuario), F5 (gestión de usuarios admin) y F6 (listado responsive) → Iniciado
 

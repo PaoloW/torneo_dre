@@ -309,3 +309,75 @@ body {
 }
 .salida.ok { border-left: 4px solid var(--ok); }
 .salida.fallo { border-left: 4px solid #dc2626; }
+
+/* ---------- F5: gestión de usuarios (admin) ---------- */
+.texto-exito {
+    background: #dcfce7;
+    border: 1px solid var(--ok);
+    color: #14532d;
+    padding: .6rem .75rem;
+    border-radius: .5rem;
+    font-size: .9rem;
+    margin: 0 0 .75rem;
+}
+.form-usuarios {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .75rem;
+    margin-top: .75rem;
+}
+@media (min-width: 700px) {
+    .form-usuarios { grid-template-columns: repeat(2, 1fr); align-items: end; }
+    .form-usuarios .botonera { grid-column: 1 / -1; }
+}
+.tarjeta-lista { margin-top: 1rem; }
+.fila-usuario {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .6rem;
+    align-items: end;
+    padding: .75rem 0;
+    border-bottom: 1px solid var(--borde);
+}
+.fila-usuario:last-of-type { border-bottom: none; }
+@media (min-width: 700px) {
+    .fila-usuario { grid-template-columns: minmax(160px, 1fr) minmax(140px, 1fr) minmax(140px, 1fr) auto; }
+    .fila-usuario-datos { grid-column: 1 / -1; }
+    .fila-usuario .error { grid-column: 1 / -1; margin: 0; }
+}
+.fila-usuario-datos { display: flex; flex-direction: column; gap: .15rem; font-size: .9rem; }
+.etiqueta-rol {
+    display: inline-block;
+    padding: .05rem .45rem;
+    border-radius: 999px;
+    background: #e4e4e7;
+    color: var(--texto-suave);
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.etiqueta-rol.admin { background: #eef2ff; color: var(--acento); }
+
+/* ---------- F6: pantalla pequeña → acciones arriba, datos del clasificado abajo ---------- */
+@media (max-width: 699px) {
+    .fila {
+        flex-wrap: wrap;
+        row-gap: .35rem;
+    }
+    /* 1ª línea: badge de puesto + acciones (select, historial, arrastre) */
+    .badge-puesto { order: 1; }
+    .fila-controles { order: 2; margin-left: auto; }
+    .handle { order: 3; }
+    /* 2ª línea: datos del clasificado a ancho completo y sin truncar */
+    .fila-info {
+        order: 4;
+        flex: 1 0 100%;
+        min-width: 100%;
+    }
+    .fila-nombre, .fila-meta {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: anywhere;
+    }
+}
