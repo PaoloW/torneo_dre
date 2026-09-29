@@ -94,11 +94,12 @@
 
     // Pinta el control de un filtro: <select> nativo con ≤5 opciones, o combo con input de
     // búsqueda si hay más de 5 (F13). Devuelve false si no hay opciones (queda oculto).
-    function renderFiltro(campo) {
+    // F17: `valor` preseleccionado → al repintar el control actual muestra el valor elegido.
+    function renderFiltro(campo, valor) {
         var $campo = $('#campo-' + campo);
         var $caja = $('#filtro-' + campo);
         $caja.empty();
-        seleccion[campo] = '';
+        seleccion[campo] = valor || '';
 
         var opciones = opcionesCampo(campo);
         var items;
@@ -177,6 +178,7 @@
 
     function alCambiarFiltro(campo, valor) {
         seleccion[campo] = valor || '';
+        renderFiltro(campo, seleccion[campo]); // F17: repinta el control actual con el valor elegido (etiqueta, .activa y panel cerrado)
         refrescarDesde(campo);
         renderMigas(); cargarLista();
     }
@@ -413,12 +415,12 @@
     }
 
     /* ---------- eventos de la lista ---------- */
-    // F12: cierra todos los combos de puesto abiertos
+    // F12: cierra todos los combos abiertos (puesto y filtros); F17: restablece aria-expanded en ambos
     function cerrarCombos() {
         $('.combo-panel').each(function () {
             if (!$(this).prop('hidden')) {
                 $(this).prop('hidden', true);
-                $(this).closest('.combo-puesto').find('.combo-btn').attr('aria-expanded', 'false');
+                $(this).closest('.combo-puesto, .combo-campo').find('.combo-btn').attr('aria-expanded', 'false');
             }
         });
     }
@@ -641,6 +643,7 @@
         });
         // F13: elegir una opción del combo de filtro (cierra el panel y aplica el filtro)
         $('.navegacion').on('click', '.combo-lista li', function (e) {
+            e.preventDefault(); // F17: sin esto, el <label> reenvía el click al combo-btn tras el dispatch y reabre el panel
             e.stopPropagation();
             cerrarCombos();
             alCambiarFiltro($(this).closest('.combo-campo').data('campo'), String($(this).attr('data-valor') || ''));

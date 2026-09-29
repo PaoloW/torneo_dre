@@ -297,6 +297,8 @@ body {
 .combo-campo { position: relative; }
 .campo .combo-campo .combo-btn {
     width: 100%;
+    box-sizing: border-box; /* F16: Beer CSS fuerza content-box en <button> (62 px) → ahora 44 px como el <select> */
+    display: block;         /* F16: sin línea base inline, .combo-campo mide exacto lo mismo que el select */
     min-height: 44px;
     padding: .5rem .65rem;
     border: 1px solid var(--borde);
