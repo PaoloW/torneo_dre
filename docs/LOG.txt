@@ -12,4 +12,6 @@
 2026-09-29 10:55 → Verificación E2E HTTP: login, permisos, árbol, orden+empate, auditoría, historial, observación, limpiar, importación web (26/26) → Terminado
 2026-09-29 11:00 → Limpieza de datos de prueba y artefactos temporales → Terminado
 2026-09-29 10:13 → Corrección: pruebas atascadas al cambiar disciplina/categoría/clase (vaciar #sel-prueba + [hidden] real en CSS) → Corregido
+2026-09-29 10:29 → PLAN.md: añadida sección 13 con fixes F1 (dropdown prueba), F2 (vista admin solo lectura) y F3 (export PDF) → Iniciado
+
 

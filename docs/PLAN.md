@@ -5,6 +5,7 @@ Torneo estudiantil (Arequipa, Moquegua, Tacna). Los jueces ordenan a los clasifi
 Plazo: puesta en producción en ~2 horas. Sin pruebas automatizadas.
 En docs/ crea un log simple de desarrollo de la aplicación en txt e inserta nuevas filas mientras desarrollas.
 Para el log usa el formato: Fecha y Hora → Acción → Estado (Iniciado, Revisión, Terminado, Fallido, puedes elegir otros).
+No actualices lineas en el log, solo agregas una nueva línea.
 Realiza commits despues de cada paso importante o cuando hagas correcciones.
 
 ---
@@ -150,7 +151,11 @@ POST /api/guardar-observacion GrupoController@observacion → {grupo:{...}, text
 GET  /api/historial/{participante} GrupoController@historial → [{created_at, user_nombre, puesto_anterior, puesto_nuevo}] (últimas 20)
 
 -- admin (middleware auth + rol=admin)
+GET  /admin/resultados     JuezController@resultados → misma UI del juez en SOLO LECTURA (§13 F2)
 POST /admin/importar       ImportController@importar
+
+-- export (auth: juez y admin)
+GET  /resultados/pdf       GrupoController@pdf → vista imprimible del grupo filtrado (§13 F3)
 ```
 
 ---
@@ -282,5 +287,17 @@ y el buscador local.
 
 ---
 
-*Plan aprobado en modo Plan → Act. Fecha: 29/09/2026.*
+---
+
+## 13. Fixes posteriores a la validación (29/09/2026)
+
+| # | Fix | Detalle técnico |
+|---|---|---|
+| **F1** | Dropdown **Prueba** atascado (p. ej. ATLETISMO) | Unificar el refresco de `#sel-prueba` en una sola función (`refrescarPrueba()`) invocada al cambiar disciplina, categoría o clase: vacía el select, quita el valor seleccionado, elimina duplicados y la rellena **solo** con las pruebas de la disciplina + clase elegidas (se oculta si no hay). `GrupoController@grupos` devuelve `pruebas` sin duplicados (`array_unique`) y el layout carga `juez.js`/`app.css` con `?v=filemtime` (cache-busting para evitar JS viejo en caché). |
+| **F2** | Vista admin de resultados (solo lectura) | `GET /admin/resultados` (rol=admin) reutiliza `juez/index.blade.php` con flag `soloLectura`: sin drag & drop, sin select de puesto, sin ↑/↓, sin "Limpiar orden" y observación en solo lectura; conserva buscador, historial y export PDF. El root `/` del admin redirige aquí (importar sigue en `/admin/importar`, con enlace en el header). |
+| **F3** | Exportar **PDF** (preview web) | Botón `Exportar PDF` en la barra (juez y admin) → `GET /resultados/pdf?disciplina=&categoria=&clase=&prueba=` → vista imprimible con el grupo filtrado (puestos, empates, IE/UGEL/Región, métricas, observación y firmas) + botón "Imprimir / Guardar PDF" (`window.print()`). |
+
+---
+
+*Plan aprobado en modo Plan → Act. Fecha: 29/09/2026. Fixes F1–F3 añadidos el 29/09/2026.*
 
