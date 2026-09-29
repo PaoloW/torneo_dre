@@ -236,12 +236,23 @@ php artisan torneo:importar "C:\xampp\htdocs\torneo\GRAL-METRICAS.csv"     # añ
 
 ## 9. Usuarios juez
 
+**Fix F4 (29/09/2026): login por `usuario` (sin email).** Seeder oficial:
+
 ```bash
-php artisan torneo:crear admin@torneo.pe "Admin"    secret admin
-php artisan torneo:crear juez1@torneo.pe "Juez Uno" secret juez
+php artisan db:seed --class=UsuariosSeeder
 ```
+
+Crea (idempotente, `updateOrCreate` por `usuario`):
+
+| usuario | nombre | rol | contraseña |
+|---|---|---|---|
+| `admin` | Admin | admin | alfanumérica aleatoria de 8 caracteres (se imprime en consola) |
+| `juez1` | Juez 1 | juez | idem |
+| `juez2` | Juez 2 | juez | idem |
+
+Alternativa manual: `php artisan torneo:crear {usuario} {nombre} {password?} {rol?}` (p. ej. `php artisan torneo:crear juez3 "Juez Tres" secret juez`).
 Acceso: **todos los jueces ven el árbol completo** disciplina > categoría > clase (decisión validada).
-Solo el admin ve `/admin/importar`.
+Solo el admin ve `/admin/importar` y `/admin/usuarios` (Fix F5).
 
 ---
 
@@ -296,8 +307,11 @@ y el buscador local.
 | **F1** | Dropdown **Prueba** atascado (p. ej. ATLETISMO) | Unificar el refresco de `#sel-prueba` en una sola función (`refrescarPrueba()`) invocada al cambiar disciplina, categoría o clase: vacía el select, quita el valor seleccionado, elimina duplicados y la rellena **solo** con las pruebas de la disciplina + clase elegidas (se oculta si no hay). `GrupoController@grupos` devuelve `pruebas` sin duplicados (`array_unique`) y el layout carga `juez.js`/`app.css` con `?v=filemtime` (cache-busting para evitar JS viejo en caché). |
 | **F2** | Vista admin de resultados (solo lectura) | `GET /admin/resultados` (rol=admin) reutiliza `juez/index.blade.php` con flag `soloLectura`: sin drag & drop, sin select de puesto, sin ↑/↓, sin "Limpiar orden" y observación en solo lectura; conserva buscador, historial y export PDF. El root `/` del admin redirige aquí (importar sigue en `/admin/importar`, con enlace en el header). |
 | **F3** | Exportar **PDF** (preview web) | Botón `Exportar PDF` en la barra (juez y admin) → `GET /resultados/pdf?disciplina=&categoria=&clase=&prueba=` → vista imprimible con el grupo filtrado (puestos, empates, IE/UGEL/Región, métricas, observación y firmas) + botón "Imprimir / Guardar PDF" (`window.print()`). |
+| **F4** | **Seeder de usuarios** + login por `usuario` | `database/seeders/UsuariosSeeder.php`: admin (`Admin`), `juez1` (`Juez 1`), `juez2` (`Juez 2`) con contraseña alfanumérica aleatoria de 8 caracteres (impresa en consola), idempotente vía `updateOrCreate`. Nueva columna `users.usuario` (única, backfill desde el email); login pasa de email → usuario (`AuthController` + `auth/login.blade.php`); `torneo:crear` adaptado a `{usuario}`. Ver §9. |
+| **F5** | **Gestión de usuarios** desde el admin | `UsuarioController` + rutas bajo `/admin/usuarios` (rol=admin): `GET` listado + formularios, `POST /crear` (usuario, nombre, contraseña, rol) y `POST /{id}/actualizar` (nombre y/o contraseña; contraseña vacía = no cambia). Vista `admin/usuarios.blade.php` (Beer CSS, tarjetas) + enlace "Usuarios" en el header admin. |
+| **F6** | **Listado legible en pantalla pequeña** | En `public/css/app.css`, media query `≤699px` sobre `.fila`: `flex-wrap` con `order` → badge de puesto + acciones (select de puesto, historial, arrastre) quedan en la **primera línea** y `.fila-info` (nombre, IE/UGEL/Región, pruebas) pasa a una **segunda línea a ancho completo**, sin `ellipsis` (texto envuelve). En `≥700px` no cambia nada. |
 
 ---
 
-*Plan aprobado en modo Plan → Act. Fecha: 29/09/2026. Fixes F1–F3 añadidos el 29/09/2026.*
+*Plan aprobado en modo Plan → Act. Fecha: 29/09/2026. Fixes F1–F3 añadidos el 29/09/2026. Fixes F4–F6 (seeder usuarios, gestión de usuarios, listado responsive) añadidos el 29/09/2026.*
 

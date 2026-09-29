@@ -21,3 +21,5 @@
 
 
 
+2026-09-29 11:26 → PLAN.md: añadidos fixes F4 (seeder usuarios + login por usuario), F5 (gestión de usuarios admin) y F6 (listado responsive) → Iniciado
+
