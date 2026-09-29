@@ -18,7 +18,8 @@ class UsuariosSeeder extends Seeder
         ];
 
         foreach ($usuarios as $datos) {
-            $password = 'torneoDREMO26';
+            // $password = $this->passwordAleatoria();
+            $password = 'torneo26';
 
             User::updateOrCreate(
                 ['usuario' => $datos['usuario']],
