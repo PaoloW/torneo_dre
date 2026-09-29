@@ -103,18 +103,40 @@
         $('#campo-prueba').prop('hidden', !opciones.length);
     }
 
+    // F11: llena #sel-clase según la categoría elegida y, si solo hay 1 clase, la elige por defecto
+    function refrescarClase() {
+        seleccion.clase = '';
+        $('#campo-clase').prop('hidden', true);
+        llenarSelect($('#sel-clase'), []);
+        var c = nodoCategoria();
+        if (!c) return;
+        llenarSelect($('#sel-clase'), c.clases.map(function (l) {
+            return { valor: l.clase, texto: l.clase + ' (' + l.total + ')' };
+        }));
+        $('#campo-clase').prop('hidden', false);
+        if (c.clases.length === 1) { // F11: única clase → elegida por defecto
+            seleccion.clase = c.clases[0].clase;
+            $('#sel-clase').val(seleccion.clase);
+        }
+    }
+
     function alCambiarDisciplina() {
         seleccion.disciplina = $('#sel-disciplina').val() || '';
         seleccion.categoria = ''; seleccion.clase = '';
-        $('#campo-categoria, #campo-clase').prop('hidden', true);
+        $('#campo-categoria').prop('hidden', true);
         llenarSelect($('#sel-categoria'), []);
-        llenarSelect($('#sel-clase'), []);
+        refrescarClase(); // F11: limpia la clase heredada
         if (seleccion.disciplina) {
             var d = nodoDisciplina();
             llenarSelect($('#sel-categoria'), d.categorias.map(function (c) {
                 return { valor: c.categoria, texto: c.categoria + ' (' + c.total + ')' };
             }));
             $('#campo-categoria').prop('hidden', false);
+            if (d.categorias.length === 1) { // F11: única categoría → elegida por defecto
+                seleccion.categoria = d.categorias[0].categoria;
+                $('#sel-categoria').val(seleccion.categoria);
+                refrescarClase(); // carga las clases y auto-elige si hay una sola
+            }
         }
         refrescarPrueba();
         renderMigas(); cargarLista();
@@ -122,16 +144,7 @@
 
     function alCambiarCategoria() {
         seleccion.categoria = $('#sel-categoria').val() || '';
-        seleccion.clase = '';
-        $('#campo-clase').prop('hidden', true);
-        llenarSelect($('#sel-clase'), []);
-        if (seleccion.categoria) {
-            var c = nodoCategoria();
-            llenarSelect($('#sel-clase'), c.clases.map(function (l) {
-                return { valor: l.clase, texto: l.clase + ' (' + l.total + ')' };
-            }));
-            $('#campo-clase').prop('hidden', false);
-        }
+        refrescarClase(); // F11: auto-selecciona la clase si solo hay 1 y limpia si hay varias
         refrescarPrueba();
         renderMigas(); cargarLista();
     }
@@ -207,6 +220,23 @@
         return html;
     }
 
+    // F12: con más de 5 puestos se usa un combo con filtro al tipear (en vez del <select> nativo)
+    function comboPuesto(p, total, nombre) {
+        var etiqueta = p.puesto == null ? '—' : p.puesto + '°';
+        var items = '<li data-valor=""' + (p.puesto == null ? ' class="activa"' : '') + '>— (sin puesto)</li>';
+        for (var i = 1; i <= total; i++) {
+            items += '<li data-valor="' + i + '"' + (p.puesto === i ? ' class="activa"' : '') + '>' + i + '°</li>';
+        }
+        return '<div class="combo-puesto">' +
+            '<button type="button" class="combo-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Puesto de ' + esc(nombre) + '">' + etiqueta + '</button>' +
+            '<div class="combo-panel" hidden>' +
+                '<input type="text" class="combo-filtro" placeholder="Filtrar puesto…" autocomplete="off" aria-label="Filtrar puesto">' +
+                '<ul class="combo-lista" role="listbox">' + items + '</ul>' +
+                '<p class="combo-vacio" hidden>Sin coincidencias</p>' +
+            '</div>' +
+        '</div>';
+    }
+
     function filaHtml(p, total, conteos) {
         var dni = p.numdoc_participante ? String(p.numdoc_participante).trim() : ''; // F7
         var nombre = nombreCompleto(p);
@@ -218,7 +248,11 @@
         // F2: en solo lectura no se pintan select de puesto, flechas ni handle de arrastre
         var controles = '<button type="button" class="btn-icono btn-historial" aria-label="Historial" title="Historial">🕘</button>';
         if (!SOLO_LECTURA) {
-            controles = '<select class="sel-puesto" aria-label="Puesto de ' + esc(nombre) + '">' + opcionesPuesto(p, total) + '</select>' +
+            // F12: >5 puestos → combo con filtro; ≤5 puestos → select nativo
+            var controlPuesto = total > 5
+                ? comboPuesto(p, total, nombre)
+                : '<select class="sel-puesto" aria-label="Puesto de ' + esc(nombre) + '">' + opcionesPuesto(p, total) + '</select>';
+            controles = controlPuesto +
                 controles +
                 '<div class="movs">' +
                     '<button type="button" class="btn-icono btn-subir" aria-label="Subir">▲</button>' +
@@ -357,6 +391,16 @@
     }
 
     /* ---------- eventos de la lista ---------- */
+    // F12: cierra todos los combos de puesto abiertos
+    function cerrarCombos() {
+        $('.combo-panel').each(function () {
+            if (!$(this).prop('hidden')) {
+                $(this).prop('hidden', true);
+                $(this).closest('.combo-puesto').find('.combo-btn').attr('aria-expanded', 'false');
+            }
+        });
+    }
+
     function eventosLista() {
         $('#lista').on('change', '.sel-puesto', function () {
             if (SOLO_LECTURA) return; // F2
@@ -365,6 +409,55 @@
             if (!p) return;
             var valor = $(this).val();
             p.puesto = valor === '' ? null : Number(valor); // empates: se escribe tal cual
+            ordenarLocal();
+            render();
+            programarGuardado();
+        });
+
+        // F12: combo de puesto (>5 puestos) — abrir/cierra
+        $('#lista').on('click', '.combo-btn', function (e) {
+            e.stopPropagation();
+            var $panel = $(this).siblings('.combo-panel');
+            var abrir = $panel.prop('hidden');
+            cerrarCombos();
+            $panel.prop('hidden', !abrir);
+            $(this).attr('aria-expanded', String(abrir));
+            if (abrir) $panel.find('.combo-filtro').val('').trigger('input').focus();
+        });
+
+        // F12: filtra las opciones del combo al tipear (subcadena, p. ej. "1" → 1°, 10°, 11°…)
+        $('#lista').on('input', '.combo-filtro', function () {
+            var texto = String($(this).val() || '').replace('°', '').toLowerCase().trim();
+            var $panel = $(this).closest('.combo-panel');
+            var visibles = 0;
+            $panel.find('.combo-lista li').each(function () {
+                var coincide = !texto || $(this).text().replace('°', '').toLowerCase().indexOf(texto) !== -1;
+                $(this).prop('hidden', !coincide);
+                if (coincide) visibles++;
+            });
+            $panel.find('.combo-vacio').prop('hidden', visibles > 0); // "Sin coincidencias"
+        });
+
+        // F12: Enter elige la primera opción visible; Esc cierra el combo
+        $('#lista').on('keydown', '.combo-filtro', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                var $primero = $(this).closest('.combo-panel').find('.combo-lista li:not([hidden])').first();
+                if ($primero.length) $primero.trigger('click');
+            } else if (e.key === 'Escape') {
+                cerrarCombos();
+            }
+        });
+
+        // F12: elegir un puesto desde el combo (mismas reglas que el select: empates tal cual)
+        $('#lista').on('click', '.combo-lista li', function (e) {
+            e.stopPropagation();
+            if (SOLO_LECTURA) return; // F2
+            var id = Number($(this).closest('.fila').data('id'));
+            var p = buscar(id);
+            if (!p) return;
+            var valor = String($(this).attr('data-valor') || '');
+            p.puesto = valor === '' ? null : Number(valor);
             ordenarLocal();
             render();
             programarGuardado();
@@ -493,6 +586,11 @@
         $('#sel-categoria').on('change', alCambiarCategoria);
         $('#sel-clase').on('change', alCambiarClase);
         $('#sel-prueba').on('change', alCambiarPrueba);
+        // F12: el combo de puesto se cierra al pulsar fuera de él (el filtro no lo cierra)
+        $(document).on('click', function (e) {
+            if ($(e.target).closest('.combo-puesto').length) return;
+            cerrarCombos();
+        });
         $('#buscador').on('input', aplicarBuscador);
         $('#btn-limpiar-buscador').on('click', function () { // F8: limpia la búsqueda
             $('#buscador').val('').trigger('input').focus();

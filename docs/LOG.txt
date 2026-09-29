@@ -35,3 +35,6 @@
 
 
 2026-09-29 14:00 → PLAN.md: añadidos fixes F11 (autoselección de categoría/clase única + carga de participantes) y F12 (dropdown de puesto con filtro al tipear cuando hay más de 5 puestos) → Iniciado
+
+2026-09-29 14:20 → F11–F12 aplicados (public/js/juez.js, public/css/app.css): autoselección de categoría/clase única con carga automática del listado (refrescarClase) y combo de puesto con filtro al tipear cuando hay más de 5 puestos (comboPuesto, Enter/Esc, clic fuera) → Terminado
+2026-09-29 14:25 → Verificación F11–F12: test jsdom + jQuery sobre juez.js real (27/27 OK) y entrega HTTP de juez.js/app.css con el código nuevo → Terminado

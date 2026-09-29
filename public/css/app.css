@@ -241,6 +241,58 @@ body {
     text-align: center;
 }
 
+/* F12: combo de puesto con filtro (grupos con más de 5 puestos) */
+.combo-puesto { position: relative; display: inline-block; }
+.fila-controles .combo-btn {
+    min-height: 44px;
+    min-width: 4.5rem;
+    padding: 0 .3rem;
+    border: 1px solid var(--borde);
+    border-radius: .5rem;
+    background: #fff;
+    color: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+}
+.fila-controles .combo-btn:hover { background: #eef2ff; color: var(--acento); }
+.combo-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 40;
+    min-width: 10rem;
+    padding: .35rem;
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: .5rem;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, .16);
+}
+.combo-filtro {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 40px;
+    margin-bottom: .3rem;
+    padding: 0 .45rem;
+    border: 1px solid var(--borde);
+    border-radius: .4rem;
+    font-size: .95rem;
+}
+.combo-lista { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; }
+.combo-lista li {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 .5rem;
+    border-radius: .4rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.combo-lista li:hover { background: #eef2ff; color: var(--acento); }
+.combo-lista li.activa { background: var(--acento); color: #fff; }
+.combo-vacio { margin: .2rem .1rem; font-size: .8rem; color: var(--texto-suave); }
+
 .movs { display: none; flex-direction: column; }
 @media (min-width: 700px) { .movs { display: flex; } }
 .movs .btn-icono { min-height: 26px; min-width: 30px; font-size: .8rem; line-height: 1; }
