@@ -16,7 +16,7 @@
     <div class="tarjeta">
         <h1 class="tarjeta-titulo">Crear usuario</h1>
 
-        <form method="POST" action="{{ url('/admin/usuarios/crear') }}" class="form-usuarios">
+        <form method="POST" action="{{ route('admin.usuarios.crear') }}" class="form-usuarios">
             @csrf
             <label class="campo">
                 <span>Usuario</span>
@@ -61,7 +61,7 @@
         <h1 class="tarjeta-titulo">Usuarios existentes ({{ $usuarios->count() }})</h1>
 
         @forelse ($usuarios as $u)
-            <form method="POST" action="{{ url('/admin/usuarios/' . $u->id . '/actualizar') }}" class="fila-usuario">
+            <form method="POST" action="{{ route('admin.usuarios.actualizar', $u->id) }}" class="fila-usuario">
                 @csrf
                 <div class="fila-usuario-datos">
                     <strong>{{ $u->name }}</strong>

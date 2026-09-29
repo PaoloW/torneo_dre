@@ -36,11 +36,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware('rol:admin')->prefix('admin')->group(function () {
         // F2: misma interfaz del juez, pero en modo solo lectura
         Route::get('/resultados', [JuezController::class, 'resultados'])->name('admin.resultados');
-        Route::get('/importar', [ImportController::class, 'mostrarFormulario']);
+        Route::get('/importar', [ImportController::class, 'mostrarFormulario'])->name('admin.importar');
         Route::post('/importar', [ImportController::class, 'importar']);
         // F5: gestión de usuarios (crear y editar nombre/contraseña)
         Route::get('/usuarios', [UsuarioController::class, 'index'])->name('admin.usuarios');
-        Route::post('/usuarios/crear', [UsuarioController::class, 'crear']);
-        Route::post('/usuarios/{id}/actualizar', [UsuarioController::class, 'actualizar']);
+        Route::post('/usuarios/crear', [UsuarioController::class, 'crear'])->name('admin.usuarios.crear');
+        Route::post('/usuarios/{id}/actualizar', [UsuarioController::class, 'actualizar'])->name('admin.usuarios.actualizar');
     });
 });
